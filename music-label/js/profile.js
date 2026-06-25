@@ -1,0 +1,165 @@
+import { auth, db, storage } from './firebase.js';
+import { updatePassword, updateEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+
+document.addEventListener('DOMContentLoaded', () => {
+  onAuthStateChanged(auth, (user) => {
+    if(user) {
+      document.getElementById('prof-name').value = localStorage.getItem('userName') || user.email;
+      document.getElementById('prof-email').value = user.email;
+      const av = localStorage.getItem('userAvatar');
+      if(av) document.getElementById('prof-avatar-preview').style.backgroundImage = `url(${av})`;
+    }
+  });
+
+  const fileInput = document.getElementById('prof-avatar-file');
+  const uploadBtn = document.getElementById('upload-avatar-btn');
+  const preview = document.getElementById('prof-avatar-preview');
+
+  if(fileInput) {
+    fileInput.addEventListener('change', (e) => {
+      if(e.target.files && e.target.files[0]) {
+        preview.style.backgroundImage = `url(${URL.createObjectURL(e.target.files[0])})`;
+        uploadBtn.style.display = 'block';
+      }
+    });
+  }
+
+  if(uploadBtn) {
+    uploadBtn.addEventListener('click', async () => {
+      const file = fileInput.files[0];
+      if(!file) return;
+      const uid = localStorage.getItem('uid');
+      uploadBtn.innerText = "Yükleniyor...";
+      uploadBtn.disabled = true;
+
+      try {
+        const fileRef = ref(storage, `avatars/${uid}/${Date.now()}_${file.name}`);
+        await uploadBytes(fileRef, file);
+        const url = await getDownloadURL(fileRef);
+
+        await updateDoc(doc(db, "users", uid), { avatarUrl: url });
+        localStorage.setItem('userAvatar', url);
+        alert("Profil fotoğrafı güncellendi!");
+        uploadBtn.style.display = 'none';
+        
+        // Update navbar immediately if possible
+        const navAvatar = document.getElementById('nav-avatar');
+        if(navAvatar) navAvatar.style.backgroundImage = `url(${url})`;
+
+      } catch(e) {
+        alert("Hata: " + e.message);
+      } finally {
+        uploadBtn.innerText = "Fotoğrafı Kaydet";
+        uploadBtn.disabled = false;
+      }
+    });
+  }
+
+  const pwdBtn = document.getElementById('update-pwd-btn');
+  if(pwdBtn) {
+    pwdBtn.addEventListener('click', async () => {
+      const p = document.getElementById('prof-new-pwd').value;
+      if(p.length < 6) return alert("Şifre en az 6 karakter olmalı!");
+      
+      pwdBtn.innerText = "Güncelleniyor...";
+      pwdBtn.disabled = true;
+      try {
+        await updatePassword(auth.currentUser, p);
+        alert("Şifreniz başarıyla güncellendi.");
+        document.getElementById('prof-new-pwd').value = '';
+      } catch(e) {
+        alert("Hata (Tekrar giriş yapmanız gerekebilir): " + e.message);
+      } finally {
+        pwdBtn.innerText = "Şifreyi Güncelle";
+        pwdBtn.disabled = false;
+      }
+    });
+  }
+
+  const emailBtn = document.getElementById('update-email-btn');
+  if(emailBtn) {
+    emailBtn.addEventListener('click', async () => {
+      const e = document.getElementById('prof-new-email').value;
+      if(!e || !e.includes('@')) return alert("Geçerli bir e-posta girin!");
+      
+      emailBtn.innerText = "Güncelleniyor...";
+      emailBtn.disabled = true;
+      try {
+        await updateEmail(auth.currentUser, e);
+        alert("E-posta başarıyla güncellendi.");
+        document.getElementById('prof-email').value = e;
+        document.getElementById('prof-new-email').value = '';
+      } catch(error) {
+        alert("Hata (Güvenlik sebebiyle tekrar giriş yapmanız gerekebilir): " + error.message);
+      } finally {
+        emailBtn.innerText = "E-postayı Güncelle";
+        emailBtn.disabled = false;
+      }
+    });
+  }
+});
+
+// Stats & Bio
+import { getDoc, getDocs, query, collection, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const uid = localStorage.getItem("uid");
+  if(!uid) return;
+
+  // Bio loading
+  const uDoc = await getDoc(doc(db, "users", uid));
+  const bioDisp = document.getElementById("bio-display");
+  const bioInput = document.getElementById("bio-input");
+  
+  if(uDoc.exists()) {
+    const d = uDoc.data();
+    if(d.bio) {
+      bioDisp.textContent = d.bio;
+      bioDisp.classList.remove("empty");
+      bioInput.value = d.bio;
+    }
+  }
+
+  // Bio editing
+  document.getElementById("bio-edit-btn").addEventListener("click", () => {
+    document.getElementById("bio-editor").classList.remove("hidden");
+    bioDisp.classList.add("hidden");
+  });
+
+  document.getElementById("bio-cancel").addEventListener("click", () => {
+    document.getElementById("bio-editor").classList.add("hidden");
+    bioDisp.classList.remove("hidden");
+  });
+
+  document.getElementById("bio-save").addEventListener("click", async () => {
+    const v = bioInput.value;
+    try {
+      await updateDoc(doc(db, "users", uid), { bio: v });
+      bioDisp.textContent = v || "Henüz biyografi eklenmedi.";
+      if(v) bioDisp.classList.remove("empty"); else bioDisp.classList.add("empty");
+      document.getElementById("bio-editor").classList.add("hidden");
+      bioDisp.classList.remove("hidden");
+      if(window.showToast) window.showToast("Biyografi güncellendi.");
+    } catch(e) {
+      alert(e.message);
+    }
+  });
+
+  // Calculate Stats
+  try {
+    const demosQ = await getDocs(query(collection(db, "demos"), where("ownerId", "==", uid)));
+    document.getElementById("ps-demos").innerText = demosQ.size;
+
+    // We don"t have a dedicated votes collection currently, we simulate it or leave as 0 
+    // In a full implementation, you"d query the notifications or a specific votes collection
+    document.getElementById("ps-votes").innerText = "0";
+
+    const friendsQ = await getDocs(collection(db, `friends/${uid}/list`));
+    document.getElementById("ps-friends").innerText = friendsQ.size;
+  } catch(e) {
+    console.error("Stats error", e);
+  }
+});
+
