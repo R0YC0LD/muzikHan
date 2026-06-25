@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Mesajlar - MüzikHan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Syncopate:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div class="app-container">
+    <div id="sidebar-container"></div>
+    <div class="main-content">
+      <div id="navbar-container"></div>
+
+      <div class="card" data-role="all" style="border-color: var(--shn-pink);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+          <div>
+            <p style="font-family:'Space Mono'; font-size:0.6rem; letter-spacing:2px; color:var(--text-mut);">Özel</p>
+            <h2 style="font-family:'Syncopate'; color: var(--shn-pink);">Mesajlar</h2>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="msg-back" style="display:none;">← Sohbetler</button>
+        </div>
+
+        <div id="chat-list">
+          <p>Yükleniyor...</p>
+        </div>
+
+        <div id="chat-view" class="hidden">
+          <div class="chat-head" id="chat-head"></div>
+          <div class="chat-msgs" id="chat-msgs"></div>
+          <div class="chat-compose">
+            <button class="btn btn-ghost" style="width:40px; font-size:1.2rem;">🎧</button>
+            <input type="text" id="chat-input" class="mb-3" style="margin-bottom:0; flex:1;" placeholder="Mesaj yaz...">
+            <button class="btn btn-primary" id="chat-send" style="width:auto;">Gönder</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOHBET SİL MODAL -->
+  <div id="chatdel-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9000; align-items:center; justify-content:center;">
+    <div class="card" style="width:100%; max-width:400px; border-color:var(--bad);">
+      <h3 style="margin-bottom:1rem; color:var(--bad);">Sohbeti Sil</h3>
+      <p style="font-size:0.8rem; color:var(--text-mut); margin-bottom:1.5rem;">Bu sohbeti nasıl silmek istersin?</p>
+      
+      <button class="btn btn-ghost" id="chatdel-self" style="margin-bottom:10px; width:100%;">Sadece benden sil</button>
+      <button class="btn btn-primary" id="chatdel-both" style="margin-bottom:10px; width:100%; background:var(--bad); color:#fff; border-color:var(--bad);">İki taraftan da sil</button>
+      
+      <div style="font-size:0.65rem; color:#888; margin-top:10px; line-height:1.5; margin-bottom:1rem;">
+        <b style="color:#aaa;">Sadece benden sil:</b> Sohbet listenden kalkar, karşı taraf yeni mesaj atarsa geri gelir.<br>
+        <b style="color:#aaa;">İki taraftan da sil:</b> Tüm mesajları her iki taraftan kalıcı olarak siler.
+      </div>
+      
+      <button class="btn btn-secondary" id="chatdel-cancel" style="width:100%;">Vazgeç</button>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/messages.js"></script>
+</body>
+</html>

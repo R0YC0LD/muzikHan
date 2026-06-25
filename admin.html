@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - MüzikHan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <div id="sidebar-container"></div>
+    
+    <div class="main-content">
+      <div id="navbar-container"></div>
+
+      <div class="card" data-role="admin">
+        <h3>Kullanıcı Yönetimi</h3>
+        <p class="text-mut">Kullanıcıların rollerini buradan belirleyebilirsiniz.</p>
+        <div id="user-list" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+          <!-- Loaded via admin.js -->
+          <p>Yükleniyor...</p>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>
