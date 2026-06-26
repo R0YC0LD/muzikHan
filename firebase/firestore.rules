@@ -5,7 +5,7 @@ service cloud.firestore {
     // Yardımcı Fonksiyonlar
     function isSignedIn() { return request.auth != null; }
     function getUserRole() { 
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role; 
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role : 'user'; 
     }
     function isAdmin() { return getUserRole() == 'admin'; }
     function isProducer() { return getUserRole() == 'producer'; }
@@ -14,7 +14,14 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && (isOwner(uid) || isAdmin());
+      allow create: if isSignedIn() && isOwner(uid) && (
+        !('isApproved' in request.resource.data) || request.resource.data.isApproved == false
+      );
+      allow update: if isSignedIn() && (
+        (isOwner(uid) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['isApproved', 'role']))) || 
+        isAdmin()
+      );
+      allow delete: if isSignedIn() && isAdmin();
     }
 
     match /teams/{teamId} {

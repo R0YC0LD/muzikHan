@@ -18,13 +18,15 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-body {
+html, body {
   background-color: var(--bg);
   color: var(--txt);
   font-family: 'Inter', sans-serif;
   min-height: 100vh;
   display: flex;
   overflow-x: hidden;
+  max-width: 100%;
+  width: 100%;
 }
 
 ::-webkit-scrollbar { width: 6px; }
@@ -246,7 +248,7 @@ input:focus, select:focus, textarea:focus {
 
 /* Auth Specific */
 .auth-wrapper {
-  width: 100vw; height: 100vh;
+  width: 100%; height: 100vh;
   display: flex; align-items: center; justify-content: center;
   background: var(--bg);
 }
@@ -297,17 +299,6 @@ input:focus, select:focus, textarea:focus {
 .bubble.mine{align-self:flex-end;background:#fff;color:#000;border-bottom-right-radius:5px;}
 .bubble.theirs{align-self:flex-start;background:var(--card-bg);border:1px solid var(--line);border-bottom-left-radius:5px; color:#fff;}
 .chat-compose{display:flex;gap:8px;align-items:center;}
-
-/* ---------- LEADERBOARD ---------- */
-.lb-tabs{display:flex;gap:8px;margin-bottom:18px;}
-.lb-tabs button{flex:1;padding:11px 8px;border-radius:10px;border:1px solid var(--line);background:transparent;
-  color:var(--text-mut);font-family:"Space Mono",monospace;font-size:.66rem;letter-spacing:1px;transition:.2s;}
-.lb-tabs button.active{color:#fff;border-color:var(--line-strong);background:rgba(255,255,255,.04);}
-.lb-item{display:flex;align-items:center;gap:12px;background:var(--card-bg);border:1px solid var(--line);
-  border-radius:14px;padding:12px 14px;margin-bottom:10px;}
-.lb-rank{width:30px;flex-shrink:0;text-align:center;font-family:"Syncopate",sans-serif;font-size:1.05rem;color:var(--text-mut);}
-.lb-rank.top{color:#e3b341;text-shadow:0 0 14px rgba(227,179,65,.4);}
-.lb-title{font-family:"Space Mono",monospace;font-weight:700;font-size:.85rem; color:#fff;}
 
 /* ---------- BUTTONS ---------- */
 .btn-ghost{background:transparent; border-color:transparent;}

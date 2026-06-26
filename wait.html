@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Onay Bekleniyor - MüzikHan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syncopate:wght@700&family=Space+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+  <style>
+    .wait-box {
+      text-align: center;
+      padding: 3rem 2rem;
+      max-width: 450px;
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-top-color: var(--shn-pink);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 2rem;
+    }
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="card auth-box wait-box">
+      <div class="spinner"></div>
+      <h2 style="color: var(--shn-pink); margin-bottom: 1rem; font-size: 1.5rem;">Yönetici Onayı Bekleniyor</h2>
+      <p style="color: var(--text-mut); font-size: 0.95rem; line-height: 1.6;">
+        Hesabınız başarıyla oluşturuldu ve e-postanız doğrulandı. Sisteme giriş yapabilmek için yönetici onayı bekleniyor. <br><br>
+        Onaylandığında bu sayfa otomatik olarak yönlendirilecektir. Lütfen bekleyin...
+      </p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from './js/firebase.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        if(!user.emailVerified) {
+          window.location.href = 'login.html';
+          return;
+        }
+
+        // Kullanıcının veritabanı dokümanını anlık dinle
+        const unsub = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.isApproved === true) {
+              window.location.href = 'dashboard.html';
+            }
+          }
+        }, (error) => {
+          console.error("Snapshot error:", error);
+        });
+
+      } else {
+        window.location.href = 'login.html';
+      }
+    });
+  </script>
+</body>
+</html>

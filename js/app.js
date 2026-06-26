@@ -14,6 +14,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (navbarContainer) {
       const resp = await fetch('components/navbar.html');
       navbarContainer.innerHTML = await resp.text();
+      
+      const un = localStorage.getItem('userName');
+      if(un) {
+          const el = document.getElementById('nav-username');
+          if(el) el.innerText = un;
+      }
+      
+      const av = localStorage.getItem('userAvatar');
+      if(av) {
+          const el = document.getElementById('nav-avatar');
+          if(el) el.style.backgroundImage = `url(${av})`;
+      }
+      
+      const btn = document.getElementById('mobile-menu-btn');
+      if(btn) {
+        btn.addEventListener('click', () => {
+          const sidebar = document.querySelector('.sidebar');
+          if(sidebar) sidebar.classList.toggle('open');
+        });
+      }
     }
 
     // Aktif sayfayı işaretle

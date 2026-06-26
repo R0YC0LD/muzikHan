@@ -28,13 +28,31 @@ export function initAuth() {
       let name = user.email.split('@')[0];
       let avatar = '';
       
+      let isApproved = false;
+      
       if (userDoc.exists()) {
         role = userDoc.data().role || 'artist';
         name = userDoc.data().name || name;
         avatar = userDoc.data().avatarUrl || '';
+        isApproved = userDoc.data().isApproved === true;
       } else {
         // Create user doc if missing
-        await setDoc(doc(db, "users", user.uid), { email: user.email, name, role, avatarUrl: '' });
+        try {
+          await setDoc(doc(db, "users", user.uid), { email: user.email, name, role, avatarUrl: '', isApproved: false });
+        } catch(err) {
+          console.error("Error creating user doc:", err);
+          alert("Kullanıcı profiliniz oluşturulurken bir hata oluştu: " + err.message);
+        }
+      }
+
+      // Admin her zaman onaylıdır
+      if (role === 'admin') isApproved = true;
+
+      if (!isApproved) {
+        if (!window.location.pathname.includes('wait.html')) {
+          window.location.href = 'wait.html';
+        }
+        return;
       }
 
       localStorage.setItem('userRole', role);
