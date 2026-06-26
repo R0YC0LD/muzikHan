@@ -28,6 +28,17 @@
         </div>
       </div>
 
+      <div class="card" data-role="admin" style="margin-bottom: 2rem;">
+        <h3 style="color: var(--shn-pink);">📨 Prodüktöre Görev / Mesaj Gönder</h3>
+        <p class="text-mut">Bir prodüktöre hangi kullanıcıyla çalışması gerektiğini ve görevini bildir.</p>
+        <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.8rem;">
+          <select id="task-producer-select"><option value="">-- Prodüktör seç --</option></select>
+          <select id="task-user-select"><option value="">-- İlgili kullanıcı (opsiyonel) --</option></select>
+          <textarea id="task-message-input" placeholder="Görev / mesaj yaz... (örn: Bu kullanıcının demosunu incele)" style="min-height: 90px;"></textarea>
+          <button id="btn-send-task" class="btn btn-primary">Gönder</button>
+        </div>
+      </div>
+
       <div class="card" data-role="admin">
         <h3>Kullanıcı Yönetimi</h3>
         <p class="text-mut">Kullanıcıların rollerini buradan belirleyebilirsiniz.</p>

@@ -43,7 +43,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if(activeLink) activeLink.classList.add('active');
     
     const pageTitle = document.getElementById('page-title');
-    if(pageTitle) pageTitle.innerText = activeLink ? activeLink.innerText.replace(/[^a-zA-ZğüşıöçĞÜŞİÖÇ ]/g, '').trim() : 'Dashboard';
+    if(pageTitle) {
+      // Sidebar'da karşılığı olmayan sayfalarda (profil, mesajlar vb.) sabit "Dashboard"
+      // göstermek yerine sayfanın kendi <title>'ından türetilmiş başlığı kullan.
+      const docTitle = (document.title.split(' - ')[0] || '').trim();
+      pageTitle.innerText = activeLink ? activeLink.innerText.replace(/[^a-zA-ZğüşıöçĞÜŞİÖÇ ]/g, '').trim() : (docTitle || 'Dashboard');
+    }
   }
 
   initAuth();

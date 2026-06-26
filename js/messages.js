@@ -18,6 +18,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadUserCacheAndTeams();
   loadChatList();
 
+  // Profil sayfasından "Mesaj Gönder" ile gelindiyse sohbeti otomatik aç
+  const params = new URLSearchParams(window.location.search);
+  const openUid = params.get('openChat');
+  if (openUid && openUid !== localStorage.getItem('uid')) {
+    window.openChat(openUid, params.get('name') || 'Kullanıcı', params.get('avatar') || '');
+  }
+
   const sInput = document.getElementById('search-user-input');
   const sResults = document.getElementById('search-user-results');
   let searchCache = null;
@@ -184,6 +191,7 @@ async function loadChatList() {
                   <div class="cr-last">Sohbet etmek için tıkla</div>
                 </div>
               </div>
+              <button class="btn btn-ghost" style="padding:5px 10px; font-size:1rem; color:var(--text-mut);" onclick="event.stopPropagation(); window.location.href='profile.html?uid=${peerId}'">👤</button>
               <button class="btn btn-ghost" style="padding:5px 10px; font-size:1.2rem; color:var(--text-mut);" onclick="window.promptDeleteChat('${d.id}')">🗑️</button>
             </div>
           `;
@@ -262,7 +270,7 @@ window.openChat = function(peerId, peerName, peerAvatar) {
     : `<div class="avatar" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:#222;font-family:'Syncopate';">${peerName.charAt(0).toUpperCase()}</div>`;
 
   document.getElementById('chat-head').innerHTML = `
-    <div style="display:flex; align-items:center; gap:10px;">
+    <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="window.location.href='profile.html?uid=${peerId}'">
       ${avatarHtml}
       <div class="ch-name">${peerName}</div>
     </div>

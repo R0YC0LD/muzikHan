@@ -1,8 +1,21 @@
 import { db } from './firebase.js';
-import { collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, getDocs, doc, setDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { auth } from './auth.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-  loadUsers();
+  // Firestore "users" listesi isSignedIn() gerektiriyor; auth durumu henüz
+  // çözülmeden getDocs çağrılırsa permission-denied alınır ve liste boş kalır.
+  // Bu yüzden onAuthStateChanged ile auth hazır olana kadar bekliyoruz.
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      loadUsers();
+      loadTaskAssignTargets();
+    }
+  });
+
+  const sendBtn = document.getElementById('btn-send-task');
+  if (sendBtn) sendBtn.addEventListener('click', sendProducerTask);
 });
 
 async function loadUsers() {
@@ -29,8 +42,8 @@ async function loadUsers() {
         pendingList.innerHTML += `
           <div style="background:var(--glass); padding:1rem; border-radius:8px; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-left: 4px solid var(--shn-pink);">
             <div style="display:flex; align-items:center; gap:15px;">
-              <div id="adm-av-p-${id}"></div>
-              <div>
+              <div id="adm-av-p-${id}" style="cursor:pointer;" onclick="window.location.href='profile.html?uid=${id}'"></div>
+              <div style="cursor:pointer;" onclick="window.location.href='profile.html?uid=${id}'">
                 <h4 style="margin:0;">${u.name || 'İsimsiz'}</h4>
                 <p style="margin:0; font-size:0.8rem;">${u.email}</p>
               </div>
@@ -46,8 +59,8 @@ async function loadUsers() {
         list.innerHTML += `
           <div style="background:var(--glass); padding:1rem; border-radius:8px; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <div style="display:flex; align-items:center; gap:15px;">
-              <div id="adm-av-${id}"></div>
-              <div>
+              <div id="adm-av-${id}" style="cursor:pointer;" onclick="window.location.href='profile.html?uid=${id}'"></div>
+              <div style="cursor:pointer;" onclick="window.location.href='profile.html?uid=${id}'">
                 <h4 style="margin:0;">${u.name || 'İsimsiz'}</h4>
                 <p style="margin:0; font-size:0.8rem;">${u.email}</p>
               </div>
@@ -94,5 +107,78 @@ window.changeUserRole = async function(uid, role) {
     alert("Kullanıcı rolü başarıyla güncellendi.");
   } catch(e) {
     alert("Yetki Hatası: " + e.message);
+  }
+}
+
+// ---------- Prodüktöre Görev / Mesaj Gönderme ----------
+async function loadTaskAssignTargets() {
+  const prodSelect = document.getElementById('task-producer-select');
+  const userSelect = document.getElementById('task-user-select');
+  if (!prodSelect || !userSelect) return;
+
+  try {
+    const snap = await getDocs(collection(db, "users"));
+    let prodOptions = '<option value="">-- Prodüktör seç --</option>';
+    let userOptions = '<option value="">-- İlgili kullanıcı (opsiyonel) --</option>';
+
+    snap.forEach(d => {
+      const u = d.data();
+      const label = `${u.name || 'İsimsiz'} (${u.email})`;
+      if (u.role === 'producer' || u.role === 'admin') {
+        prodOptions += `<option value="${d.id}">${label}</option>`;
+      }
+      userOptions += `<option value="${d.id}" data-name="${(u.name || u.email || '').replace(/"/g, '')}">${label}</option>`;
+    });
+
+    prodSelect.innerHTML = prodOptions;
+    userSelect.innerHTML = userOptions;
+  } catch (e) {
+    console.error("Görev hedefleri yüklenemedi:", e);
+  }
+}
+
+async function sendProducerTask() {
+  const prodSelect = document.getElementById('task-producer-select');
+  const userSelect = document.getElementById('task-user-select');
+  const msgInput = document.getElementById('task-message-input');
+  const btn = document.getElementById('btn-send-task');
+
+  const producerId = prodSelect.value;
+  const message = msgInput.value.trim();
+  if (!producerId) return alert("Lütfen bir prodüktör seçin.");
+  if (!message) return alert("Lütfen bir görev/mesaj yazın.");
+
+  const targetUserId = userSelect.value || null;
+  const targetUserName = targetUserId ? userSelect.options[userSelect.selectedIndex].dataset.name : null;
+
+  btn.disabled = true;
+  btn.innerText = "Gönderiliyor...";
+
+  try {
+    await addDoc(collection(db, `tasks/${producerId}/assigned`), {
+      message,
+      targetUserId,
+      targetUserName,
+      done: false,
+      createdAt: serverTimestamp()
+    });
+
+    // Prodüktöre bildirim gönder
+    await addDoc(collection(db, `notifications/${producerId}/user_notifications`), {
+      message: `Yöneticiden yeni bir görev aldın: "${message.substring(0, 40)}"`,
+      createdAt: serverTimestamp(),
+      type: 'task_assign',
+      link: 'dashboard.html'
+    });
+
+    msgInput.value = '';
+    userSelect.value = '';
+    if (window.showToast) window.showToast("Görev prodüktöre gönderildi.");
+    else alert("Görev prodüktöre gönderildi.");
+  } catch (e) {
+    alert("Hata: " + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Gönder";
   }
 }

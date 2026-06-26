@@ -84,5 +84,11 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow write: if isSignedIn() && isOwner(uid);
     }
+
+    match /tasks/{uid}/assigned/{taskId} {
+      allow read: if isSignedIn() && (isOwner(uid) || isAdmin());
+      allow create, update: if isSignedIn() && isAdmin();
+      allow delete: if isSignedIn() && (isOwner(uid) || isAdmin());
+    }
   }
 }

@@ -49,7 +49,7 @@ async function loadTeams() {
         for(const m of d.members) {
           memHtml += `
             <div class="member-row">
-              <div style="display:flex; align-items:center; gap:10px;">
+              <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="window.location.href='profile.html?uid=${m.uid}'">
                 <span style="font-family:'Space Mono'; font-size:0.8rem; color:#fff;">${m.name}</span>
                 <span class="badge ${m.role==='admin'?'admin':'friend'}">${m.role}</span>
               </div>

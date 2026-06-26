@@ -1,15 +1,48 @@
 import { auth, db, storage } from './firebase.js';
 import { updatePassword, updateEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+
+const viewedUid = new URLSearchParams(window.location.search).get('uid');
+let isOwnProfile = true;
+
+async function enterViewOnlyMode(uid) {
+  document.getElementById('profile-title').innerText = 'Profil';
+  document.getElementById('own-avatar-controls').classList.add('hidden');
+  document.getElementById('own-profile-controls').classList.add('hidden');
+  document.getElementById('other-user-name').classList.remove('hidden');
+  document.getElementById('other-user-actions').classList.remove('hidden');
+
+  try {
+    const uDoc = await getDoc(doc(db, "users", uid));
+    if(uDoc.exists()) {
+      const d = uDoc.data();
+      document.getElementById('other-user-name-text').innerText = d.name || 'İsimsiz';
+      const roleLabels = { admin: 'Yönetici', producer: 'Prodüktör', artist: 'Sanatçı' };
+      document.getElementById('other-user-role-text').innerText = roleLabels[d.role] || '';
+      if(d.avatarUrl) document.getElementById('prof-avatar-preview').style.backgroundImage = `url(${d.avatarUrl})`;
+
+      document.getElementById('msg-other-user-btn').onclick = () => {
+        window.location.href = `messages.html?openChat=${uid}&name=${encodeURIComponent(d.name || d.email || 'Kullanıcı')}&avatar=${encodeURIComponent(d.avatarUrl || '')}`;
+      };
+    }
+  } catch(e) {
+    console.error("Kullanıcı profili yüklenemedi:", e);
+  }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   onAuthStateChanged(auth, (user) => {
-    if(user) {
+    if(!user) return;
+    isOwnProfile = !viewedUid || viewedUid === user.uid;
+
+    if(isOwnProfile) {
       document.getElementById('prof-name').value = localStorage.getItem('userName') || user.email;
       document.getElementById('prof-email').value = user.email;
       const av = localStorage.getItem('userAvatar');
       if(av) document.getElementById('prof-avatar-preview').style.backgroundImage = `url(${av})`;
+    } else {
+      enterViewOnlyMode(viewedUid);
     }
   });
 
@@ -129,17 +162,21 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Stats & Bio
-import { getDoc, getDocs, query, collection, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getDocs, query, collection, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const uid = localStorage.getItem("uid");
-  if(!uid) return;
+  const ownUid = localStorage.getItem("uid");
+  if(!ownUid) return;
+  // Görüntülenen profil kendi profilimiz değilse (?uid= ile başka bir kullanıcı geziliyorsa)
+  // istatistik ve biyografiyi o kullanıcı için yükle, düzenleme sadece kendi profilimizde açık.
+  const targetUid = (viewedUid && viewedUid !== ownUid) ? viewedUid : ownUid;
+  const canEdit = targetUid === ownUid;
 
   // Bio loading
-  const uDoc = await getDoc(doc(db, "users", uid));
+  const uDoc = await getDoc(doc(db, "users", targetUid));
   const bioDisp = document.getElementById("bio-display");
   const bioInput = document.getElementById("bio-input");
-  
+
   if(uDoc.exists()) {
     const d = uDoc.data();
     if(d.bio) {
@@ -149,41 +186,45 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // Bio editing
-  document.getElementById("bio-edit-btn").addEventListener("click", () => {
-    document.getElementById("bio-editor").classList.remove("hidden");
-    bioDisp.classList.add("hidden");
-  });
+  if(!canEdit) {
+    document.getElementById("bio-edit-btn").style.display = 'none';
+  } else {
+    // Bio editing
+    document.getElementById("bio-edit-btn").addEventListener("click", () => {
+      document.getElementById("bio-editor").classList.remove("hidden");
+      bioDisp.classList.add("hidden");
+    });
 
-  document.getElementById("bio-cancel").addEventListener("click", () => {
-    document.getElementById("bio-editor").classList.add("hidden");
-    bioDisp.classList.remove("hidden");
-  });
-
-  document.getElementById("bio-save").addEventListener("click", async () => {
-    const v = bioInput.value;
-    try {
-      await updateDoc(doc(db, "users", uid), { bio: v });
-      bioDisp.textContent = v || "Henüz biyografi eklenmedi.";
-      if(v) bioDisp.classList.remove("empty"); else bioDisp.classList.add("empty");
+    document.getElementById("bio-cancel").addEventListener("click", () => {
       document.getElementById("bio-editor").classList.add("hidden");
       bioDisp.classList.remove("hidden");
-      if(window.showToast) window.showToast("Biyografi güncellendi.");
-    } catch(e) {
-      alert(e.message);
-    }
-  });
+    });
+
+    document.getElementById("bio-save").addEventListener("click", async () => {
+      const v = bioInput.value;
+      try {
+        await updateDoc(doc(db, "users", targetUid), { bio: v });
+        bioDisp.textContent = v || "Henüz biyografi eklenmedi.";
+        if(v) bioDisp.classList.remove("empty"); else bioDisp.classList.add("empty");
+        document.getElementById("bio-editor").classList.add("hidden");
+        bioDisp.classList.remove("hidden");
+        if(window.showToast) window.showToast("Biyografi güncellendi.");
+      } catch(e) {
+        alert(e.message);
+      }
+    });
+  }
 
   // Calculate Stats
   try {
-    const demosQ = await getDocs(query(collection(db, "demos"), where("ownerId", "==", uid)));
+    const demosQ = await getDocs(query(collection(db, "demos"), where("ownerId", "==", targetUid)));
     document.getElementById("ps-demos").innerText = demosQ.size;
 
-    // We don"t have a dedicated votes collection currently, we simulate it or leave as 0 
+    // We don"t have a dedicated votes collection currently, we simulate it or leave as 0
     // In a full implementation, you"d query the notifications or a specific votes collection
     document.getElementById("ps-votes").innerText = "0";
 
-    const friendsQ = await getDocs(collection(db, `friends/${uid}/list`));
+    const friendsQ = await getDocs(collection(db, `friends/${targetUid}/list`));
     document.getElementById("ps-friends").innerText = friendsQ.size;
   } catch(e) {
     console.error("Stats error", e);

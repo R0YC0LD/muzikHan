@@ -1,10 +1,58 @@
 import { db } from './firebase.js';
-import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, getDocs, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', () => {
   // Give auth a moment to load
   setTimeout(loadStats, 1000);
+  setTimeout(loadTasks, 1000);
 });
+
+async function loadTasks() {
+  const list = document.getElementById('tasks-list');
+  if (!list) return;
+
+  const uid = localStorage.getItem('uid');
+  if (!uid) return;
+
+  try {
+    const q = query(collection(db, `tasks/${uid}/assigned`), where('done', '==', false));
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      list.innerHTML = '<p class="text-mut">Henüz atanmış bir göreviniz bulunmuyor.</p>';
+      return;
+    }
+
+    // Composite index gerektirmemek için sıralamayı client-side yapıyoruz
+    const docs = snap.docs.slice().sort((a, b) => (b.data().createdAt?.seconds || 0) - (a.data().createdAt?.seconds || 0));
+
+    list.innerHTML = '';
+    docs.forEach(d => {
+      const t = d.data();
+      list.innerHTML += `
+        <div style="background:var(--glass); padding:1rem; border-radius:10px; display:flex; justify-content:space-between; align-items:center; gap:1rem; border-left: 4px solid var(--shn-pink);">
+          <div>
+            <p style="margin:0; color:#fff;">${t.message}</p>
+            ${t.targetUserId ? `<a href="profile.html?uid=${t.targetUserId}" style="font-size:0.75rem;">👤 İlgili kullanıcı: ${t.targetUserName || 'Profili gör'}</a>` : ''}
+          </div>
+          <button class="btn btn-secondary" onclick="window.completeTask('${d.id}')">Tamamla</button>
+        </div>
+      `;
+    });
+  } catch (e) {
+    list.innerHTML = `<p style="color:var(--bad)">Görevler yüklenemedi: ${e.message}</p>`;
+  }
+}
+
+window.completeTask = async function(taskId) {
+  const uid = localStorage.getItem('uid');
+  try {
+    await updateDoc(doc(db, `tasks/${uid}/assigned`, taskId), { done: true });
+    loadTasks();
+  } catch (e) {
+    alert("Hata: " + e.message);
+  }
+};
 
 async function loadStats() {
   const role = localStorage.getItem('userRole') || 'artist';
