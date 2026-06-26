@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#030303">
+  <meta name="theme-color" content="#030303">
   <meta charset="UTF-8">
   <title>Giriş Yap - MüzikHan SaaS</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -8,7 +13,7 @@
 </head>
 <body>
   <div class="auth-wrapper">
-    <div class="card auth-box">
+    <div id="login-box" class="card auth-box">
       <h2 style="text-align: center; margin-bottom: 1.5rem;">MüzikHan Giriş</h2>
       <input type="email" id="email" placeholder="E-posta Adresi" class="mb-3" style="margin-bottom: 1rem;">
       <input type="password" id="password" placeholder="Şifre" class="mb-3" style="margin-bottom: 1rem;">
@@ -16,10 +21,22 @@
       <button id="register-btn" class="btn btn-ghost" style="width: 100%;">Hesabın Yok Mu? Kayıt Ol</button>
       <p id="error-msg" style="color: var(--bad); text-align: center; margin-top: 1rem;"></p>
     </div>
+
+    <!-- Doğrulama Ekranı -->
+    <div id="verify-box" class="card auth-box" style="display: none; text-align: center;">
+      <h2 style="margin-bottom: 1rem; color: var(--shn-pink);">E-posta Doğrulaması</h2>
+      <p style="margin-bottom: 1.5rem; color: var(--text-mut); font-size: 0.9rem;">
+        Sisteme giriş yapabilmek için e-postanızı doğrulamanız gerekmektedir.<br><br>
+        <strong style="color: var(--bad);">ÖNEMLİ:</strong> Doğrulama maili <b>Gereksiz/Spam</b> klasörüne düşmüş olabilir. Lütfen tüm klasörlerinizi kontrol edin.
+      </p>
+      <button id="check-verify-btn" class="btn btn-primary" style="width: 100%; margin-bottom: 1rem;">Maili Doğruladım</button>
+      <button id="back-login-btn" class="btn btn-ghost" style="width: 100%;">Geri Dön</button>
+      <p id="verify-error-msg" style="color: var(--bad); margin-top: 1rem;"></p>
+    </div>
   </div>
 
   <script type="module">
-    import { initAuth, login, registerUser } from './js/auth.js';
+    import { initAuth, login, registerUser, auth } from './js/auth.js';
     initAuth();
 
     document.getElementById('login-btn').addEventListener('click', async () => {
@@ -40,9 +57,34 @@
       if(p.length < 6) return err.innerText = "Şifre en az 6 karakter olmalı.";
       try {
         await registerUser(e, p);
+        // Kayıt başarılıysa doğrulama kutusunu göster
+        document.getElementById('login-box').style.display = 'none';
+        document.getElementById('verify-box').style.display = 'block';
       } catch(error) {
         err.innerText = error.message;
       }
+    });
+
+    document.getElementById('check-verify-btn').addEventListener('click', async () => {
+      const vErr = document.getElementById('verify-error-msg');
+      const user = auth.currentUser;
+      if(user) {
+        await user.reload(); // Firebase'den son durumu çek
+        if(user.emailVerified) {
+          // Doğrulandı, sayfayı yenile (initAuth otomatik alacak)
+          window.location.reload();
+        } else {
+          vErr.innerText = "Hâlâ doğrulanmamış. Spam klasörüne baktınız mı?";
+        }
+      } else {
+        vErr.innerText = "Oturum düştü, lütfen tekrar giriş yapın.";
+      }
+    });
+
+    document.getElementById('back-login-btn').addEventListener('click', () => {
+       auth.signOut();
+       document.getElementById('verify-box').style.display = 'none';
+       document.getElementById('login-box').style.display = 'block';
     });
   </script>
 </body>

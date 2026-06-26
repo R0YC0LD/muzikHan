@@ -1,5 +1,22 @@
 import { initAuth } from './auth.js';
 
+// Tam Ekran (Fullscreen) Aktifleştirme
+function enableFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(err => {
+      console.log(`Tam ekran hatası: ${err.message}`);
+    });
+  }
+}
+
+// Uygulama yüklendikten sonra ilk tıklamada tam ekrana geç
+document.addEventListener('click', () => {
+  enableFullscreen();
+}, { once: true });
+document.addEventListener('touchstart', () => {
+  enableFullscreen();
+}, { once: true });
+
 document.addEventListener('DOMContentLoaded', async () => {
   // Dinamik olarak sidebar ve navbar'ı yükle (Sadece login değilse)
   if (!window.location.pathname.includes('login.html')) {
@@ -93,4 +110,41 @@ window.renderAvatarHtml = function(url, size, fallbackChar) {
   }
   return `<div class="avatar" style="width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;background:#222;font-family:'Syncopate';flex-shrink:0;">${fallbackChar ? fallbackChar.charAt(0).toUpperCase() : '?'}</div>`;
 };
+
+// Global Notifications Listener
+import { collection, query, orderBy, onSnapshot, limit } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { auth } from "./auth.js";
+
+let _notifUnsub = null;
+let _firstNotifLoad = true;
+
+onAuthStateChanged(auth, (user) => {
+  if(user) {
+    if(_notifUnsub) _notifUnsub();
+    const q = query(collection(db, `notifications/${user.uid}/user_notifications`), orderBy('createdAt', 'desc'), limit(1));
+    _notifUnsub = onSnapshot(q, (snapshot) => {
+      if(_firstNotifLoad) {
+        _firstNotifLoad = false;
+        return;
+      }
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === "added") {
+          const data = change.doc.data();
+          window.showNotif("Yeni Bildirim", data.message);
+          
+          const pop = document.getElementById("notif-pop");
+          if(pop) {
+             pop.onclick = () => {
+                if(data.link) window.location.href = data.link;
+             };
+             pop.style.cursor = data.link ? "pointer" : "default";
+          }
+        }
+      });
+    });
+  } else {
+    if(_notifUnsub) _notifUnsub();
+  }
+});
 

@@ -57,6 +57,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const nameBtn = document.getElementById('update-name-btn');
+  if(nameBtn) {
+    nameBtn.addEventListener('click', async () => {
+      const n = document.getElementById('prof-name').value;
+      if(!n) return alert("İsim boş olamaz!");
+      const uid = localStorage.getItem('uid');
+      
+      nameBtn.innerText = "Güncelleniyor...";
+      nameBtn.disabled = true;
+      try {
+        await updateDoc(doc(db, "users", uid), { name: n });
+        localStorage.setItem('userName', n);
+        alert("İsminiz başarıyla güncellendi.");
+        
+        // Navbar'ı hemen güncelle
+        const navU = document.getElementById('nav-username');
+        if(navU) navU.innerText = n;
+      } catch(error) {
+        alert("Hata: " + error.message);
+      } finally {
+        nameBtn.innerText = "İsmi Güncelle";
+        nameBtn.disabled = false;
+      }
+    });
+  }
+
   const pwdBtn = document.getElementById('update-pwd-btn');
   if(pwdBtn) {
     pwdBtn.addEventListener('click', async () => {

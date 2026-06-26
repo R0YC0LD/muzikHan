@@ -7,19 +7,43 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function loadStats() {
-  const role = localStorage.getItem('userRole');
-  if(role !== 'admin' && role !== 'crew') return;
+  const role = localStorage.getItem('userRole') || 'artist';
+  const uid = localStorage.getItem('uid');
+  if(!uid) return;
 
   try {
-    const demosSnap = await getDocs(collection(db, "demos"));
-    const relSnap = await getDocs(query(collection(db, "releases"), where("status", "==", "bekliyor")));
-    
-    // Update DOM (varsayılan statik kartlar yerine)
-    const cards = document.querySelectorAll('.stat-card h3');
-    if(cards.length >= 2) {
-      cards[0].innerText = demosSnap.size;
-      cards[1].innerText = relSnap.size;
+    let demosSnap, relSnap, beatsSnap, presetsSnap;
+
+    // Yetki kontrolüne göre veri çekme
+    if(role === 'admin' || role === 'crew' || role === 'producer') {
+      demosSnap = await getDocs(collection(db, "demos"));
+      beatsSnap = await getDocs(collection(db, "beats"));
+      presetsSnap = await getDocs(collection(db, "presets"));
+    } else {
+      // Sadece sanatçının kendi yükledikleri
+      demosSnap = await getDocs(query(collection(db, "demos"), where("ownerId", "==", uid)));
+      beatsSnap = { size: 0 }; // Sanatçı beat göremez
+      presetsSnap = { size: 0 }; // Sanatçı preset göremez
     }
+
+    // Release için admin/crew tüm bekleyenleri, artist sadece kendininkini görür
+    if(role === 'admin' || role === 'crew') {
+      relSnap = await getDocs(query(collection(db, "releases"), where("status", "==", "bekliyor")));
+    } else {
+      relSnap = await getDocs(query(collection(db, "releases"), where("ownerId", "==", uid), where("status", "==", "bekliyor")));
+    }
+    
+    // DOM Güncelleme
+    const stDemos = document.getElementById('stat-demos');
+    const stRel = document.getElementById('stat-releases');
+    const stBeats = document.getElementById('stat-beats');
+    const stPresets = document.getElementById('stat-presets');
+
+    if(stDemos) stDemos.innerText = demosSnap.size;
+    if(stRel) stRel.innerText = relSnap.size;
+    if(stBeats) stBeats.innerText = beatsSnap.size;
+    if(stPresets) stPresets.innerText = presetsSnap.size;
+
   } catch(e) {
     console.error("Dashboard Stats Error:", e);
   }

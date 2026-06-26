@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#030303">
   <meta charset="UTF-8">
   <title>Profil & Ayarlar - MüzikHan</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Syncopate:wght@700&display=swap" rel="stylesheet">
@@ -45,10 +49,11 @@
           </div>
         </div>
 
-        <label>Görünen Adınız</label>
-        <input type="text" id="prof-name" class="mb-3" disabled style="color: var(--mut);">
+        <h4 style="margin-bottom: 1rem; font-family: 'Space Mono'; font-size:1rem; color:#fff;">Görünen Adınız</h4>
+        <input type="text" id="prof-name" class="mb-3" style="color: var(--txt);">
+        <button id="update-name-btn" class="btn btn-primary" style="width: 100%; margin-bottom: 2rem;">İsmi Güncelle</button>
 
-        <label>Mevcut E-posta Adresiniz</label>
+        <h4 style="margin-bottom: 1rem; font-family: 'Space Mono'; font-size:1rem; color:#fff;">E-posta Bilgisi</h4>
         <input type="text" id="prof-email" class="mb-3" disabled style="color: var(--mut);">
 
         <hr style="border-color: var(--line-strong); margin: 2rem 0;">

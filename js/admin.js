@@ -14,13 +14,17 @@ async function loadUsers() {
     list.innerHTML = '';
     snap.forEach(d => {
       const u = d.data();
+      const id = d.id;
       list.innerHTML += `
-        <div style="background:var(--glass); padding:1rem; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <h4 style="margin:0;">${u.name || 'İsimsiz'}</h4>
-            <p style="margin:0; font-size:0.8rem;">${u.email}</p>
+        <div style="background:var(--glass); padding:1rem; border-radius:8px; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div style="display:flex; align-items:center; gap:15px;">
+            <div id="adm-av-${id}"></div>
+            <div>
+              <h4 style="margin:0;">${u.name || 'İsimsiz'}</h4>
+              <p style="margin:0; font-size:0.8rem;">${u.email}</p>
+            </div>
           </div>
-          <select onchange="window.changeUserRole('${d.id}', this.value)">
+          <select onchange="window.changeUserRole('${id}', this.value)">
             <option value="artist" ${u.role === 'artist' ? 'selected' : ''}>Sanatçı</option>
             <option value="crew" ${u.role === 'crew' ? 'selected' : ''}>Ekip Üyesi</option>
             <option value="producer" ${u.role === 'producer' ? 'selected' : ''}>Prodüktör</option>
@@ -28,6 +32,10 @@ async function loadUsers() {
           </select>
         </div>
       `;
+      window.getUserAvatar(id).then(url => {
+        const el = document.getElementById(`adm-av-${id}`);
+        if(el) el.innerHTML = window.renderAvatarHtml(url, 40, u.name || 'User');
+      });
     });
   } catch(e) {
     list.innerHTML = `<p style="color:var(--bad)">Hata: ${e.message}. Sadece yöneticiler erişebilir.</p>`;

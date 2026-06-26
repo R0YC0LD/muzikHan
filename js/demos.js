@@ -68,7 +68,16 @@ async function loadDemos() {
         avg = (total / d.scoreData.length).toFixed(1);
       }
 
-      // Fetch Avatar asynchronously
+      let rateHtml = '';
+      if (canRate && uid !== d.ownerId) {
+        rateHtml = `<button class="btn btn-secondary" onclick="document.getElementById('rate-${id}').style.display='block'">Puanla</button>`;
+      }
+      
+      let deleteHtml = '';
+      if (localStorage.getItem('userRole') === 'admin') {
+        deleteHtml = `<button class="btn" style="background:var(--bad); color:#fff; border:none; margin-left:10px;" onclick="window.deleteDemo('${id}')">Sil</button>`;
+      }
+
       const cardId = `demo-card-${id}`;
       list.innerHTML += `
         <div id="${cardId}" class="card item-card" style="position:relative;">
@@ -81,9 +90,12 @@ async function loadDemos() {
           </div>
           <audio controls src="${d.audioUrl}" style="width:100%; margin:10px 0;"></audio>
           
-          <button class="btn btn-secondary" style="margin-top:10px" onclick="document.getElementById('rate-${id}').style.display='block'">Puanla</button>
+          <div>
+            ${rateHtml}
+            ${deleteHtml}
+          </div>
           
-          <div id="rate-${id}" class="rating-popup">
+          <div id="rate-${id}" class="rating-popup" style="display:none;">
             <div class="rating-group">
               <span class="rating-label">Şarkı (Vibe)</span>
               <div class="star-rating" id="song-${id}">
@@ -151,7 +163,8 @@ window.submitDemoRating = async function(docId, ownerId, title) {
     await addDoc(collection(db, `notifications/${ownerId}/user_notifications`), {
       message: msg,
       createdAt: serverTimestamp(),
-      type: 'demo_rating'
+      type: 'demo_rating',
+      link: 'demos.html'
     });
 
     alert("Puan gönderildi!");
@@ -163,3 +176,15 @@ window.submitDemoRating = async function(docId, ownerId, title) {
     alert("Hata: " + e.message);
   }
 }
+
+import { deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+window.deleteDemo = async function(demoId) {
+  if(!confirm("Bu demoyu tamamen silmek istediğinize emin misiniz?")) return;
+  try {
+    await deleteDoc(doc(db, "demos", demoId));
+    alert("Demo başarıyla silindi.");
+    loadDemos();
+  } catch(e) {
+    alert("Silme hatası: " + e.message);
+  }
+};

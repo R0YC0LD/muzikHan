@@ -186,7 +186,7 @@ window.submitBeatRating = async function(docId, ownerId, title) {
     await addDoc(collection(db, `notifications/${ownerId}/user_notifications`), {
       message: msg,
       createdAt: serverTimestamp(),
-      type: 'beat_rating'
+      type: 'beat_rating', link: 'kitchen.html'
     });
 
     alert("Puan ve notun iletildi!");

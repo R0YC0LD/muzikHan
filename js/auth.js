@@ -5,12 +5,20 @@ import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/f
 // Check if we are on login page
 const isLoginPage = window.location.pathname.includes('login.html');
 
+export { auth };
+
 export function initAuth() {
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       if (!user.emailVerified) {
-        alert("Lütfen önce e-postanızı doğrulayın!");
-        await signOut(auth);
+        if (isLoginPage) {
+          const lBox = document.getElementById('login-box');
+          const vBox = document.getElementById('verify-box');
+          if(lBox) lBox.style.display = 'none';
+          if(vBox) vBox.style.display = 'block';
+        } else {
+          window.location.href = 'login.html';
+        }
         return;
       }
 
@@ -50,11 +58,17 @@ export function initAuth() {
 }
 
 function applyPermissions(role) {
-  // Hide all restricted links first
+  // Show allowed links (they are hidden by default to prevent flicker)
   const elements = document.querySelectorAll('[data-role]');
   elements.forEach(el => {
     const allowedRoles = el.getAttribute('data-role').split(',');
-    if (!allowedRoles.includes(role) && !allowedRoles.includes('all')) {
+    if (allowedRoles.includes(role) || allowedRoles.includes('all')) {
+      if (el.tagName.toLowerCase() === 'a') {
+        el.style.display = 'flex'; // sidebar links use flex
+      } else {
+        el.style.display = 'block';
+      }
+    } else {
       el.style.display = 'none';
     }
   });
@@ -68,9 +82,7 @@ function applyPermissions(role) {
 export async function registerUser(email, pass) {
   const cred = await createUserWithEmailAndPassword(auth, email, pass);
   await sendEmailVerification(cred.user);
-  await signOut(auth);
-  window.showToast("Kayıt başarılı! Lütfen e-postanızı doğrulayın.");
-  location.reload();
+  // signOut yapmıyoruz ki verify-box'ta kalabilsin
 }
 
 export async function login(email, password) {
