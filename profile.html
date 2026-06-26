@@ -10,7 +10,7 @@
   <link rel="icon" href="simge.png" type="image/png">
   <title>Profil & Ayarlar - MüzikHan</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Syncopate:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/app.css?v=2">
+  <link rel="stylesheet" href="css/app.css?v=3">
 </head>
 <body>
   <div class="app-container">
@@ -61,7 +61,13 @@
         </div>
 
         <div id="own-profile-controls">
-          <h4 style="margin-bottom: 1rem; font-family: 'Space Mono'; font-size:1rem; color:#fff;">Görünen Adınız</h4>
+          <h4 style="margin-bottom: 1rem; font-size:1rem; color:#fff;">Görünüm</h4>
+          <div class="theme-toggle-row">
+            <button class="btn btn-secondary" id="theme-dark-btn">🌙 Koyu Mod</button>
+            <button class="btn btn-secondary" id="theme-light-btn">☀️ Açık Mod</button>
+          </div>
+
+          <h4 style="margin-bottom: 1rem; font-size:1rem; color:#fff;">Görünen Adınız</h4>
           <input type="text" id="prof-name" class="mb-3" style="color: var(--txt);">
           <button id="update-name-btn" class="btn btn-primary" style="width: 100%; margin-bottom: 2rem;">İsmi Güncelle</button>
 

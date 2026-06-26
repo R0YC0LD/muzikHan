@@ -46,6 +46,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Açık/Koyu mod seçimi
+  const themeDarkBtn = document.getElementById('theme-dark-btn');
+  const themeLightBtn = document.getElementById('theme-light-btn');
+  const markActiveTheme = (theme) => {
+    if(themeDarkBtn) themeDarkBtn.classList.toggle('active', theme !== 'light');
+    if(themeLightBtn) themeLightBtn.classList.toggle('active', theme === 'light');
+  };
+  if(themeDarkBtn && themeLightBtn) {
+    markActiveTheme(localStorage.getItem('theme') || 'dark');
+    themeDarkBtn.addEventListener('click', () => { window.setTheme('dark'); markActiveTheme('dark'); });
+    themeLightBtn.addEventListener('click', () => { window.setTheme('light'); markActiveTheme('light'); });
+  }
+
   const fileInput = document.getElementById('prof-avatar-file');
   const uploadBtn = document.getElementById('upload-avatar-btn');
   const preview = document.getElementById('prof-avatar-preview');

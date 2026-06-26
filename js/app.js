@@ -1,5 +1,19 @@
 import { initAuth } from './auth.js';
 
+// Tema tercihi: sayfa daha boyanmadan en erken anda uygula (flaş'ı azaltmak için
+// module script DOMContentLoaded'dan önce, ama HTML parse edildikten sonra çalışır).
+window.applyTheme = function(theme) {
+  const isLight = theme === 'light';
+  document.documentElement.setAttribute('data-theme', isLight ? 'light' : 'dark');
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if(metaTheme) metaTheme.setAttribute('content', isLight ? '#f7f6f4' : '#030303');
+};
+window.setTheme = function(theme) {
+  localStorage.setItem('theme', theme);
+  window.applyTheme(theme);
+};
+window.applyTheme(localStorage.getItem('theme') || 'dark');
+
 document.addEventListener('DOMContentLoaded', async () => {
   // Dinamik olarak sidebar ve navbar'ı yükle (Sadece login değilse)
   if (!window.location.pathname.includes('login.html')) {
