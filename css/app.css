@@ -3,7 +3,7 @@
 :root {
   --bg: #0d0d10;
   --card-bg: #16161a;
-  --shn-pink: #ec5f8a;
+  --shn-pink: #e63946;
   --shn-accent: #ededed;
   --shn-mid: #9a9aa2;
   --secondary: #444;
@@ -15,7 +15,7 @@
   --bad: #ff6b6b;
   --glass: rgba(255, 255, 255, 0.03);
   --glass-border: rgba(255, 255, 255, 0.06);
-  --glow: rgba(236, 95, 138, 0.10);
+  --glow: rgba(230, 57, 70, 0.10);
   --bubble-mine-bg: #ededed;
   --bubble-mine-txt: #0d0d10;
 }
@@ -24,7 +24,7 @@
 [data-theme="light"] {
   --bg: #f7f6f4;
   --card-bg: #ffffff;
-  --shn-pink: #d6406b;
+  --shn-pink: #c81e2c;
   --shn-accent: #1c1c1f;
   --shn-mid: #6b6b73;
   --secondary: #ddd;
@@ -36,7 +36,7 @@
   --bad: #d23b41;
   --glass: rgba(0, 0, 0, 0.02);
   --glass-border: rgba(0, 0, 0, 0.06);
-  --glow: rgba(214, 64, 107, 0.06);
+  --glow: rgba(200, 30, 44, 0.06);
   --bubble-mine-bg: #1c1c1f;
   --bubble-mine-txt: #ffffff;
 }
