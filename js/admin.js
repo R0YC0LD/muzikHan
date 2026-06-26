@@ -41,8 +41,8 @@ async function loadUsers() {
       if (!isApproved && pendingList) {
         pendingCount++;
         pendingList.innerHTML += `
-          <div style="background:var(--glass); padding:1rem; border-radius:8px; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-left: 4px solid var(--shn-pink);">
-            <div style="display:flex; align-items:center; gap:15px;">
+          <div style="background:var(--glass); padding:1rem; border-radius:8px; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; border-left: 4px solid var(--shn-pink);">
+            <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
               <div id="adm-av-p-${id}" style="cursor:pointer;" onclick="window.location.href='profile.html?uid=${id}'"></div>
               <div style="cursor:pointer;" onclick="window.location.href='profile.html?uid=${id}'">
                 <h4 style="margin:0;">${u.name || 'İsimsiz'}</h4>
@@ -59,8 +59,8 @@ async function loadUsers() {
         });
       } else {
         list.innerHTML += `
-          <div style="background:var(--glass); padding:1rem; border-radius:8px; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <div style="display:flex; align-items:center; gap:15px;">
+          <div style="background:var(--glass); padding:1rem; border-radius:8px; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;">
+            <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
               <div id="adm-av-${id}" style="cursor:pointer;" onclick="window.location.href='profile.html?uid=${id}'"></div>
               <div style="cursor:pointer;" onclick="window.location.href='profile.html?uid=${id}'">
                 <h4 style="margin:0;">${u.name || 'İsimsiz'}</h4>

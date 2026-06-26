@@ -168,7 +168,7 @@ async function loadChatList() {
         count++;
         list.innerHTML += `
           <div class="chat-row" style="display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer;">
-            <div style="display:flex; align-items:center; gap:10px; flex:1;" onclick="window.openGroupChat('${d.id}', '${(d.name||'Grup').replace(/'/g, "\\'")}')">
+            <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0;" onclick="window.openGroupChat('${d.id}', '${(d.name||'Grup').replace(/'/g, "\\'")}')">
               <div class="avatar" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:#222;font-family:'Syncopate';color:var(--shn-pink);">G</div>
               <div>
                 <div class="cr-name">${d.name||'Grup'} (Grup)</div>
@@ -195,8 +195,8 @@ async function loadChatList() {
             : `<div class="avatar" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:#222;font-family:'Syncopate';">${pName.charAt(0).toUpperCase()}</div>`;
 
           list.innerHTML += `
-            <div class="chat-row" style="display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer;">
-              <div style="display:flex; align-items:center; gap:10px; flex:1;" onclick="window.openChat('${peerId}', '${pName.replace(/'/g, "\\'")}', '${pData.avatarUrl || ''}')">
+            <div class="chat-row" style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; cursor:pointer;">
+              <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0;" onclick="window.openChat('${peerId}', '${pName.replace(/'/g, "\\'")}', '${pData.avatarUrl || ''}')">
                 ${avatarHtml}
                 <div>
                   <div class="cr-name">${pName}</div>

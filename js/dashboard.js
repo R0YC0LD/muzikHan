@@ -30,9 +30,9 @@ async function loadTasks() {
     docs.forEach(d => {
       const t = d.data();
       list.innerHTML += `
-        <div style="background:var(--glass); padding:1rem; border-radius:10px; display:flex; justify-content:space-between; align-items:center; gap:1rem; border-left: 4px solid var(--shn-pink);">
-          <div>
-            <p style="margin:0; color:#fff;">${t.message}</p>
+        <div style="background:var(--glass); padding:1rem; border-radius:10px; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:1rem; border-left: 4px solid var(--shn-pink);">
+          <div style="min-width:0;">
+            <p style="margin:0; color:#fff; word-break:break-word;">${t.message}</p>
             ${t.targetUserId ? `<a href="profile.html?uid=${t.targetUserId}" style="font-size:0.75rem;">👤 İlgili kullanıcı: ${t.targetUserName || 'Profili gör'}</a>` : ''}
           </div>
           <button class="btn btn-secondary" onclick="window.completeTask('${d.id}')">Tamamla</button>

@@ -13,10 +13,12 @@
   <link rel="stylesheet" href="css/app.css">
   <style>
     .team-card { background: rgba(255,255,255,0.02); border: 1px solid var(--line-strong); padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; }
-    .team-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 1rem; margin-bottom: 1rem; }
+    .team-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 1rem; margin-bottom: 1rem; }
     .team-members { display: flex; flex-direction: column; gap: 0.5rem; }
-    .member-row { display: flex; justify-content: space-between; align-items: center; background: #000; padding: 10px; border-radius: 8px; border: 1px solid var(--line); }
-    .search-box { display: flex; gap: 10px; margin-top: 1rem; }
+    .member-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; background: #000; padding: 10px; border-radius: 8px; border: 1px solid var(--line); }
+    .search-box { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 1rem; }
+    .create-team-row { display: flex; flex-wrap: wrap; gap: 10px; }
+    .create-team-row input { flex: 1; min-width: 150px; }
   </style>
 </head>
 <body>
@@ -31,7 +33,7 @@
           <h3>Ekipler Yönetimi</h3>
           <p class="text-mut">Yeni ekip kurabilir, mevcut ekiplerinize üye ekleyip çıkarabilirsiniz.</p>
 
-          <div style="margin-top:2rem; display:flex; gap:10px;">
+          <div class="create-team-row" style="margin-top:2rem;">
             <input type="text" id="new-team-name" placeholder="Yeni Ekip Adı...">
             <button class="btn btn-primary" id="btn-create-team">Ekip Kur</button>
           </div>

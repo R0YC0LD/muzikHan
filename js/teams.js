@@ -235,7 +235,7 @@ window.searchAndAddUser = async function(tId) {
     let html = '<div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; display:flex; flex-direction:column; gap:8px;">';
     for(let u of found) {
       html += `
-        <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px;">
           <span style="font-size:0.85rem; color:#fff;">${u.name} (${u.role})</span>
           <button class="btn btn-primary" style="padding:4px 8px; font-size:0.6rem;" onclick="addMemberToTeam('${tId}', '${u.uid}', '${u.name.replace(/'/g,"\\'")}', '${u.role}')">Ekle</button>
         </div>

@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
       let linkClick = d.link ? `onclick="window.location.href='${d.link}'"` : '';
       
       list.innerHTML += `
-        <div style="background: rgba(255,255,255,0.02); border-left: 2px solid var(--shn-pink); padding: 10px; border-radius: 8px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+        <div style="background: rgba(255,255,255,0.02); border-left: 2px solid var(--shn-pink); padding: 10px; border-radius: 8px; margin-bottom:10px; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px;">
           <div style="flex:1; cursor:${cursor};" ${linkClick}>
             <p style="color: var(--txt); font-family: 'Space Mono'; font-size: 0.85rem; margin:0 0 5px 0;">${d.message}</p>
             <small style="color: var(--mut); font-size: 0.7rem;">${date}</small>
