@@ -4,12 +4,13 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.1/firebase
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBAEFpdzpoB2vtvhSDOZaGuSn24TCZjmsI",
-  authDomain: "ceso-istanbul.firebaseapp.com",
-  projectId: "ceso-istanbul",
-  storageBucket: "ceso-istanbul.firebasestorage.app",
-  messagingSenderId: "30392774343",
-  appId: "1:30392774343:web:8baffdf90c6e97404858e2"
+    apiKey: "AIzaSyB-iYgpqQYmgHf0FQnvh1LT3GJIwfJP4qE",
+    authDomain: "muzikhan-dd347.firebaseapp.com",
+    projectId: "muzikhan-dd347",
+    storageBucket: "muzikhan-dd347.firebasestorage.app",
+    messagingSenderId: "860422356275",
+    appId: "1:860422356275:web:24dd18806481b0e6731246",
+    measurementId: "G-B3XL5K98WL"
 };
 
 export const app = initializeApp(firebaseConfig);
