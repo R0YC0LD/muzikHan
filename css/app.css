@@ -189,6 +189,8 @@ input:focus, select:focus, textarea:focus {
   padding-bottom: 1.5rem;
   border-bottom: 1px solid var(--line);
   margin-bottom: 1rem;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* navbar.html'in ilk çocuğu (hamburger+başlık grubu): dar ekranlarda
@@ -197,6 +199,7 @@ input:focus, select:focus, textarea:focus {
 #page-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; max-width: 100%; vertical-align: bottom; }
 
 .header-actions { display: flex; gap: 1rem; flex-shrink: 0; }
+.header-actions #nav-avatar, .header-actions .btn-icon { flex-shrink: 0; }
 
 /* Cards & Glassmorphism */
 .card {
@@ -387,4 +390,8 @@ input:focus, select:focus, textarea:focus {
 
 @media (max-width: 400px) {
   #nav-username { display: none; }
+  .header-actions { gap: 0.4rem !important; }
+  .header-actions .btn-icon { padding: 8px !important; font-size: 0.9rem; }
+  #nav-avatar { width: 30px !important; height: 30px !important; }
+  #mobile-menu-btn { padding: 0 6px !important; font-size: 1.3rem !important; }
 }
