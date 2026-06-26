@@ -11,7 +11,7 @@
   <link rel="icon" href="simge.png" type="image/png">
   <title>Giriş Yap - MüzikHan SaaS</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/app.css?v=4">
+  <link rel="stylesheet" href="css/app.css?v=5">
 </head>
 <body>
   <div class="auth-wrapper">
@@ -51,6 +51,13 @@
   <script type="module">
     import { initAuth, login, registerUser, auth, getFriendlyAuthError } from './js/auth.js';
     initAuth();
+
+    // Yasaklı/uzaklaştırılmış kullanıcı auth.js tarafından buraya yönlendirildiyse sebebini göster
+    const blockReason = localStorage.getItem('authBlockReason');
+    if (blockReason) {
+      document.getElementById('error-msg').innerText = blockReason;
+      localStorage.removeItem('authBlockReason');
+    }
 
     document.getElementById('login-btn').addEventListener('click', async () => {
       const e = document.getElementById('email').value;

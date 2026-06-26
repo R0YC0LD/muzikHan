@@ -18,7 +18,7 @@ service cloud.firestore {
         !('isApproved' in request.resource.data) || request.resource.data.isApproved == false
       );
       allow update: if isSignedIn() && (
-        (isOwner(uid) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['isApproved', 'role']))) || 
+        (isOwner(uid) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['isApproved', 'role', 'banned', 'banReason', 'suspendedUntil', 'suspendReason']))) ||
         isAdmin()
       );
       allow delete: if isSignedIn() && isAdmin();

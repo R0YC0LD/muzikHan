@@ -31,10 +31,28 @@ export function initAuth() {
       let isApproved = false;
       
       if (userDoc.exists()) {
-        role = userDoc.data().role || 'artist';
-        name = userDoc.data().name || name;
-        avatar = userDoc.data().avatarUrl || '';
-        isApproved = userDoc.data().isApproved === true;
+        const udata = userDoc.data();
+        role = udata.role || 'artist';
+        name = udata.name || name;
+        avatar = udata.avatarUrl || '';
+        isApproved = udata.isApproved === true;
+
+        // Yasaklı veya geçici uzaklaştırılmış kullanıcı: rol/onay kontrolünden önce çıkış yaptır
+        if (udata.banned === true) {
+          await signOut(auth);
+          localStorage.clear();
+          localStorage.setItem('authBlockReason', `Hesabınız yönetici tarafından yasaklandı.${udata.banReason ? ' Sebep: ' + udata.banReason : ''}`);
+          window.location.href = 'login.html';
+          return;
+        }
+        if (udata.suspendedUntil && udata.suspendedUntil.toMillis() > Date.now()) {
+          await signOut(auth);
+          localStorage.clear();
+          const until = udata.suspendedUntil.toDate().toLocaleString('tr-TR');
+          localStorage.setItem('authBlockReason', `Hesabınız ${until} tarihine kadar geçici olarak uzaklaştırıldı.${udata.suspendReason ? ' Sebep: ' + udata.suspendReason : ''}`);
+          window.location.href = 'login.html';
+          return;
+        }
       } else {
         // Create user doc if missing
         try {

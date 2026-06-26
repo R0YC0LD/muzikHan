@@ -76,6 +76,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('chatdel-self').addEventListener('click', () => deleteChatAction('self'));
   document.getElementById('chatdel-both').addEventListener('click', () => deleteChatAction('both'));
+
+  const teamMembersClose = document.getElementById('team-members-modal-close');
+  if(teamMembersClose) teamMembersClose.addEventListener('click', () => {
+    document.getElementById('team-members-modal').style.display = 'none';
+  });
 });
 
 async function loadUserCacheAndTeams() {
@@ -87,7 +92,7 @@ async function loadUserCacheAndTeams() {
     tSnap.forEach(d => {
       const data = d.data();
       if(data.members && data.members.find(m => m.uid === uid)) {
-        myTeams.push(data);
+        myTeams.push({ ...data, id: d.id });
         // Ekip üyelerinin isim/rolünü cache'e al: grup sohbetinde sadece 1v1 sohbet
         // partnerleri cache'leniyordu, grup üyeleri hiç cache'lenmediği için isimleri
         // "Bilinmiyor" ve rol etiketleri eksik görünüyordu.
@@ -257,13 +262,48 @@ window.openGroupChat = function(cId, teamName) {
   document.getElementById('msg-back').style.display = 'block';
 
   document.getElementById('chat-head').innerHTML = `
-    <div style="display:flex; align-items:center; gap:10px;">
+    <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="window.showTeamMembers('${cId}')">
       <div class="avatar" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:#222;font-family:'Syncopate';color:var(--shn-pink);">G</div>
       <div class="ch-name">${teamName} (Grup)</div>
+      <span style="font-size:0.7rem; color:var(--mut);">👥 Üyeler</span>
     </div>
   `;
 
   attachMessagesListener();
+};
+
+// Sanatçılar Ekipler sekmesini görmediği için grup sohbetinden kimlerin ekipte olduğunu görebilsinler.
+window.showTeamMembers = function(teamId) {
+  const team = myTeams.find(t => t.id === teamId);
+  const modal = document.getElementById('team-members-modal');
+  const list = document.getElementById('team-members-modal-list');
+  if(!modal || !list) return;
+
+  const members = (team && team.members) || [];
+  if(members.length === 0) {
+    list.innerHTML = '<p style="color:var(--mut); font-size:0.85rem;">Üye bilgisi bulunamadı.</p>';
+  } else {
+    list.innerHTML = members.map(m => {
+      const roleLabel = { admin: 'Yönetici', producer: 'Prodüktör', artist: 'Sanatçı' }[m.role] || m.role;
+      const avId = `tmm-av-${m.uid}`;
+      return `
+        <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="window.location.href='profile.html?uid=${m.uid}'">
+          <div id="${avId}"></div>
+          <span style="font-size:0.85rem; color:#fff; flex:1;">${m.name}</span>
+          <span class="badge ${m.role==='admin'?'admin':'friend'}">${roleLabel}</span>
+        </div>
+      `;
+    }).join('');
+
+    members.forEach(m => {
+      window.getUserAvatar(m.uid).then(url => {
+        const el = document.getElementById(`tmm-av-${m.uid}`);
+        if(el) el.innerHTML = window.renderAvatarHtml(url, 32, m.name || 'User');
+      });
+    });
+  }
+
+  modal.style.display = 'flex';
 };
 
 window.openChat = function(peerId, peerName, peerAvatar) {

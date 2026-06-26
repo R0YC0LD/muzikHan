@@ -15,6 +15,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   onAuthStateChanged(auth, (user) => {
     if(user) {
+      const role = localStorage.getItem('userRole');
+      if(role !== 'admin' && role !== 'producer') {
+        document.querySelector('.main-content').innerHTML = '<h2 style="margin:2rem">Yetkiniz Yok</h2>';
+        return;
+      }
       loadItems('beats');
       loadItems('presets');
       loadItems('stems');

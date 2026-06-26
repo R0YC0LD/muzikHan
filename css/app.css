@@ -20,27 +20,6 @@
   --bubble-mine-txt: #0d0d10;
 }
 
-/* Açık Mod — Ayarlar sayfasından kullanıcı tercihiyle açılır (bkz. js/app.js, js/profile.js) */
-[data-theme="light"] {
-  --bg: #f7f6f4;
-  --card-bg: #ffffff;
-  --shn-pink: #c81e2c;
-  --shn-accent: #1c1c1f;
-  --shn-mid: #6b6b73;
-  --secondary: #ddd;
-  --line: rgba(0, 0, 0, 0.08);
-  --line-strong: rgba(0, 0, 0, 0.15);
-  --txt: #1c1c1f;
-  --mut: #6b6b73;
-  --text-mut: #6b6b73;
-  --bad: #d23b41;
-  --glass: rgba(0, 0, 0, 0.02);
-  --glass-border: rgba(0, 0, 0, 0.06);
-  --glow: rgba(200, 30, 44, 0.06);
-  --bubble-mine-bg: #1c1c1f;
-  --bubble-mine-txt: #ffffff;
-}
-
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 /* Göz yormayan tek yazı tipi: site genelinde (satır içi stiller dahil) Inter'e zorla geçiş */
@@ -337,11 +316,6 @@ input:focus, select:focus, textarea:focus {
 .btn-ghost{background:transparent; border-color:transparent;}
 .btn-ghost:hover{background:var(--glass); border-color:var(--line-strong);}
 .hidden{display:none!important;}
-
-/* ---------- TEMA SEÇİCİ (Ayarlar) ---------- */
-.theme-toggle-row{display:flex;gap:10px;margin-bottom:2rem;}
-.theme-toggle-row .btn{flex:1;}
-.theme-toggle-row .btn.active{background:var(--shn-pink);color:#fff;border-color:var(--shn-pink);}
 
 /* ---------- MOBILE RESPONSIVE ---------- */
 @media (max-width: 768px) {

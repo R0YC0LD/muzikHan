@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadTeams();
       } else if(userRole === 'producer') {
         document.getElementById('producer-artists-panel').style.display = 'block';
-        loadMyArtists();
+        loadMyTeams();
       } else {
         document.querySelector('.main-content').innerHTML = '<h2 style="margin:2rem">Yetkiniz Yok</h2>';
       }
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if(createBtn) createBtn.addEventListener('click', createTeam);
 });
 
-async function loadMyArtists() {
+async function loadMyTeams() {
   const list = document.getElementById('my-artists-list');
   if(!list) return;
   list.innerHTML = '<p>Yükleniyor...</p>';
@@ -37,44 +37,67 @@ async function loadMyArtists() {
     // teams koleksiyonu members alanında nesne array'i tuttuğu için
     // "kendi üyesi olduğum ekipler" sorgusu client-side filtreleniyor (mevcut admin akışıyla aynı desen).
     const snap = await getDocs(collection(db, "teams"));
-    const artistIds = new Set();
+    const myTeams = [];
 
     snap.forEach(d => {
       const data = d.data();
       const amMember = data.members && data.members.some(m => m.uid === currentUser.uid);
-      if(amMember) {
-        data.members.forEach(m => { if(m.role === 'artist') artistIds.add(m.uid); });
-      }
+      if(amMember) myTeams.push({ id: d.id, ...data });
     });
 
-    if(artistIds.size === 0) {
-      list.innerHTML = '<p class="text-mut">Henüz bir ekipte birlikte çalıştığın sanatçı yok.</p>';
+    if(myTeams.length === 0) {
+      list.innerHTML = '<p class="text-mut">Henüz bir ekibe eklenmedin.</p>';
       return;
     }
 
+    // Birden fazla ekipte olabilir: her ekip kendi başlığı (ekip ismi) ile ayrı blok olarak gözükür.
     list.innerHTML = '';
-    for(const aid of artistIds) {
-      const uDoc = await getDoc(doc(db, "users", aid));
-      if(!uDoc.exists()) continue;
-      const u = uDoc.data();
+    for(const team of myTeams) {
+      const members = team.members || [];
+      const blockId = `my-team-${team.id}`;
 
       list.innerHTML += `
-        <div class="member-row">
-          <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="window.location.href='profile.html?uid=${aid}'">
-            <div id="art-av-${aid}"></div>
-            <span style="font-family:'Space Mono'; font-size:0.85rem; color:#fff;">${u.name || 'İsimsiz'}</span>
+        <div class="team-card" id="${blockId}">
+          <div class="team-header">
+            <h4 style="color:var(--shn-pink); font-size:1.2rem;">${team.name}</h4>
           </div>
-          <div style="display:flex; align-items:center; gap:10px;">
-            <button class="btn btn-ghost btn-sm" style="padding:2px 6px; font-size:0.65rem;" onclick="this.nextElementSibling.classList.remove('hidden'); this.classList.add('hidden')">Maili Göster</button>
-            <span class="hidden" style="font-size:0.75rem; color:var(--mut);">${u.email || ''}</span>
-          </div>
+          <div class="team-members" id="${blockId}-members"></div>
         </div>
       `;
 
-      window.getUserAvatar(aid).then(url => {
-        const el = document.getElementById(`art-av-${aid}`);
-        if(el) el.innerHTML = window.renderAvatarHtml(url, 32, u.name || 'User');
-      });
+      const membersContainer = document.getElementById(`${blockId}-members`);
+      if(members.length === 0) {
+        membersContainer.innerHTML = '<p style="font-size:0.8rem; color:var(--mut);">Henüz üye yok.</p>';
+        continue;
+      }
+
+      for(const m of members) {
+        const avId = `tm-av-${team.id}-${m.uid}`;
+        membersContainer.innerHTML += `
+          <div class="member-row">
+            <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="window.location.href='profile.html?uid=${m.uid}'">
+              <div id="${avId}"></div>
+              <span style="font-size:0.85rem; color:#fff;">${m.name}</span>
+              <span class="badge ${m.role==='admin'?'admin':'friend'}">${m.role}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <button class="btn btn-ghost btn-sm" style="padding:2px 6px; font-size:0.65rem;" onclick="this.nextElementSibling.classList.remove('hidden'); this.classList.add('hidden')">Maili Göster</button>
+              <span class="hidden" id="email-${avId}" style="font-size:0.75rem; color:var(--mut);"></span>
+            </div>
+          </div>
+        `;
+
+        getDoc(doc(db, "users", m.uid)).then(uDoc => {
+          const email = uDoc.exists() ? (uDoc.data().email || '') : '';
+          const emailEl = document.getElementById(`email-${avId}`);
+          if(emailEl) emailEl.textContent = email;
+        });
+
+        window.getUserAvatar(m.uid).then(url => {
+          const el = document.getElementById(avId);
+          if(el) el.innerHTML = window.renderAvatarHtml(url, 32, m.name || 'User');
+        });
+      }
     }
   } catch(e) {
     list.innerHTML = `<p style="color:var(--bad)">Hata: ${e.message}</p>`;

@@ -1,5 +1,5 @@
 import { db } from './firebase.js';
-import { collection, getDocs, doc, setDoc, addDoc, serverTimestamp, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, getDocs, doc, setDoc, deleteDoc, addDoc, serverTimestamp, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { auth } from './auth.js';
 
@@ -11,6 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Bu yüzden onAuthStateChanged ile auth hazır olana kadar bekliyoruz.
   onAuthStateChanged(auth, (user) => {
     if (user) {
+      if (localStorage.getItem('userRole') !== 'admin') {
+        document.querySelector('.main-content').innerHTML = '<h2 style="margin:2rem">Yetkiniz Yok</h2>';
+        return;
+      }
       loadUsers();
       loadActivityLog();
     }
@@ -91,17 +95,49 @@ function renderUserSearchResults(qStr) {
     return;
   }
 
-  results.innerHTML = matches.map(u => `
-    <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; background:var(--glass); padding:0.6rem 0.8rem; border-radius:8px;">
-      <div id="usr-av-${u.id}" style="cursor:pointer;" onclick="window.location.href='profile.html?uid=${u.id}'"></div>
-      <span style="flex:1; min-width:0; font-size:0.85rem; cursor:pointer;" onclick="window.location.href='profile.html?uid=${u.id}'">${u.name || 'İsimsiz'}</span>
-      <select style="width:auto; min-width:130px; padding:0.5rem;" onchange="window.changeUserRole('${u.id}', this.value, '${(u.name || u.email || '').replace(/'/g, "\\'")}')">
-        <option value="artist" ${u.role === 'artist' ? 'selected' : ''}>Sanatçı</option>
-        <option value="producer" ${u.role === 'producer' ? 'selected' : ''}>Prodüktör</option>
-        <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Yönetici</option>
-      </select>
+  results.innerHTML = matches.map(u => {
+    const safeName = (u.name || u.email || '').replace(/'/g, "\\'");
+    const isSuspended = u.suspendedUntil && u.suspendedUntil.toMillis && u.suspendedUntil.toMillis() > Date.now();
+
+    let statusHtml = '';
+    if (u.banned) {
+      statusHtml = `<span class="badge" style="color:var(--bad); border-color:var(--bad);">YASAKLI</span>
+        <button class="btn btn-ghost btn-sm" style="font-size:0.65rem;" onclick="window.unbanUser('${u.id}', '${safeName}')">Yasağı Kaldır</button>`;
+    } else if (isSuspended) {
+      const untilStr = u.suspendedUntil.toDate().toLocaleString('tr-TR');
+      statusHtml = `<span class="badge" style="color:#e3b341; border-color:#e3b341;">UZAKLAŞTIRILDI: ${untilStr}</span>
+        <button class="btn btn-ghost btn-sm" style="font-size:0.65rem;" onclick="window.unsuspendUser('${u.id}', '${safeName}')">Kaldır</button>`;
+    } else {
+      statusHtml = `
+        <button class="btn btn-ghost btn-sm" style="font-size:0.65rem; color:var(--bad);" onclick="window.banUser('${u.id}', '${safeName}')">Yasakla</button>
+        <select id="susp-days-${u.id}" style="width:auto; min-width:100px; padding:0.5rem;">
+          <option value="1">1 Gün</option>
+          <option value="3">3 Gün</option>
+          <option value="7">7 Gün</option>
+          <option value="30">30 Gün</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" style="font-size:0.65rem;" onclick="window.suspendUser('${u.id}', '${safeName}', document.getElementById('susp-days-${u.id}').value)">Uzaklaştır</button>
+      `;
+    }
+
+    return `
+    <div style="display:flex; flex-direction:column; gap:8px; background:var(--glass); padding:0.8rem; border-radius:8px;">
+      <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px;">
+        <div id="usr-av-${u.id}" style="cursor:pointer;" onclick="window.location.href='profile.html?uid=${u.id}'"></div>
+        <span style="flex:1; min-width:0; font-size:0.85rem; cursor:pointer;" onclick="window.location.href='profile.html?uid=${u.id}'">${u.name || 'İsimsiz'}</span>
+        <select style="width:auto; min-width:130px; padding:0.5rem;" onchange="window.changeUserRole('${u.id}', this.value, '${safeName}')">
+          <option value="artist" ${u.role === 'artist' ? 'selected' : ''}>Sanatçı</option>
+          <option value="producer" ${u.role === 'producer' ? 'selected' : ''}>Prodüktör</option>
+          <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Yönetici</option>
+        </select>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
+        ${statusHtml}
+        <button class="btn btn-ghost btn-sm" style="font-size:0.65rem; color:var(--bad); margin-left:auto;" onclick="window.deleteUserAccount('${u.id}', '${safeName}')">🗑️ Hesabı Sil</button>
+      </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   matches.forEach(u => {
     window.getUserAvatar(u.id).then(url => {
@@ -136,6 +172,67 @@ window.changeUserRole = async function(uid, role, name) {
   } catch(e) {
     alert("Yetki Hatası: " + e.message);
   }
+}
+
+// ---------- Yasaklama / Uzaklaştırma / Hesap Silme ----------
+function refreshSearchAfterChange() {
+  const input = document.getElementById('user-search-input');
+  if (input && input.value.trim()) renderUserSearchResults(input.value.trim());
+}
+
+window.banUser = async function(uid, name) {
+  const reason = prompt(`${name} kullanıcısını neden yasaklıyorsun? (opsiyonel)`, '') || '';
+  if (!confirm(`${name} kullanıcısını yasaklamak istediğinize emin misiniz? Bu kullanıcı sisteme giriş yapamayacak.`)) return;
+  try {
+    await setDoc(doc(db, "users", uid), { banned: true, banReason: reason }, { merge: true });
+    window.logActivity('Kullanıcıyı yasakladı', name);
+    const cached = allUsersCache.find(u => u.id === uid);
+    if (cached) { cached.banned = true; cached.banReason = reason; }
+    refreshSearchAfterChange();
+  } catch(e) { alert("Hata: " + e.message); }
+}
+
+window.unbanUser = async function(uid, name) {
+  try {
+    await setDoc(doc(db, "users", uid), { banned: false, banReason: '' }, { merge: true });
+    window.logActivity('Yasağı kaldırdı', name);
+    const cached = allUsersCache.find(u => u.id === uid);
+    if (cached) { cached.banned = false; cached.banReason = ''; }
+    refreshSearchAfterChange();
+  } catch(e) { alert("Hata: " + e.message); }
+}
+
+window.suspendUser = async function(uid, name, days) {
+  const reason = prompt(`${name} kullanıcısını ${days} gün için neden uzaklaştırıyorsun? (opsiyonel)`, '') || '';
+  const until = new Date(Date.now() + Number(days) * 24 * 60 * 60 * 1000);
+  try {
+    await setDoc(doc(db, "users", uid), { suspendedUntil: until, suspendReason: reason }, { merge: true });
+    window.logActivity(`${days} gün uzaklaştırdı`, name);
+    const cached = allUsersCache.find(u => u.id === uid);
+    if (cached) { cached.suspendedUntil = { toMillis: () => until.getTime(), toDate: () => until }; cached.suspendReason = reason; }
+    refreshSearchAfterChange();
+  } catch(e) { alert("Hata: " + e.message); }
+}
+
+window.unsuspendUser = async function(uid, name) {
+  try {
+    await setDoc(doc(db, "users", uid), { suspendedUntil: null, suspendReason: '' }, { merge: true });
+    window.logActivity('Uzaklaştırmayı kaldırdı', name);
+    const cached = allUsersCache.find(u => u.id === uid);
+    if (cached) { cached.suspendedUntil = null; cached.suspendReason = ''; }
+    refreshSearchAfterChange();
+  } catch(e) { alert("Hata: " + e.message); }
+}
+
+window.deleteUserAccount = async function(uid, name) {
+  if (!confirm(`${name} kullanıcısının hesap verisini SİLMEK istediğinize emin misiniz? Bu işlem geri alınamaz.\n\n(Not: Firebase Authentication girişi istemci taraflı silinemez — kullanıcı tekrar giriş yaparsa yeniden onay beklemesi gerekir.)`)) return;
+  try {
+    await deleteDoc(doc(db, "users", uid));
+    window.logActivity('Hesabı sildi', name);
+    allUsersCache = allUsersCache.filter(u => u.id !== uid);
+    refreshSearchAfterChange();
+    alert("Kullanıcı verisi silindi.");
+  } catch(e) { alert("Hata: " + e.message); }
 }
 
 // ---------- Prodüktöre Görev / Mesaj Gönderme ----------
