@@ -70,13 +70,9 @@ async function uploadItem(type) {
       // Prodüktörlere bildirim yolla
       const usersSnap = await getDocs(query(collection(db, "users"), where("role", "==", "producer")));
       const msg = `YENİ STEM: ${localStorage.getItem('userName')}, "${title}" adlı şarkının stemlerini yükledi.`;
-      usersSnap.forEach(async (uDoc) => {
+      usersSnap.forEach((uDoc) => {
         if(uDoc.id !== uid) {
-          await addDoc(collection(db, `notifications/${uDoc.id}/user_notifications`), {
-            message: msg,
-            createdAt: serverTimestamp(),
-            type: 'stem_alert'
-          });
+          window.sendNotification(uDoc.id, msg, 'stem_alert');
         }
       });
     }
@@ -206,11 +202,7 @@ window.submitBeatRating = async function(docId, ownerId, title) {
     await updateDoc(beatRef, { scoreData });
 
     const msg = `${localStorage.getItem('userName')}, "${title}" adlı beatini oyladı. Notu: "${note || 'Not yok'}"`;
-    await addDoc(collection(db, `notifications/${ownerId}/user_notifications`), {
-      message: msg,
-      createdAt: serverTimestamp(),
-      type: 'beat_rating', link: 'kitchen.html'
-    });
+    window.sendNotification(ownerId, msg, 'beat_rating', 'kitchen.html');
 
     alert("Puan ve notun iletildi!");
     document.getElementById(`rate-beat-${docId}`).style.display = 'none';

@@ -1,5 +1,5 @@
 import { auth, db, storage } from './firebase.js';
-import { updatePassword, updateEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { updatePassword, updateEmail, onAuthStateChanged, EmailAuthProvider, reauthenticateWithCredential } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
@@ -135,17 +135,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const pwdBtn = document.getElementById('update-pwd-btn');
   if(pwdBtn) {
     pwdBtn.addEventListener('click', async () => {
+      const currentPwd = document.getElementById('prof-current-pwd').value;
       const p = document.getElementById('prof-new-pwd').value;
-      if(p.length < 6) return alert("Şifre en az 6 karakter olmalı!");
-      
+      if(!currentPwd) return alert("Mevcut şifrenizi girin!");
+      if(p.length < 6) return alert("Yeni şifre en az 6 karakter olmalı!");
+
       pwdBtn.innerText = "Güncelleniyor...";
       pwdBtn.disabled = true;
       try {
+        const credential = EmailAuthProvider.credential(auth.currentUser.email, currentPwd);
+        await reauthenticateWithCredential(auth.currentUser, credential);
         await updatePassword(auth.currentUser, p);
         alert("Şifreniz başarıyla güncellendi.");
+        document.getElementById('prof-current-pwd').value = '';
         document.getElementById('prof-new-pwd').value = '';
       } catch(e) {
-        alert("Hata (Tekrar giriş yapmanız gerekebilir): " + e.message);
+        alert("Hata: Mevcut şifreniz yanlış olabilir. (" + e.message + ")");
       } finally {
         pwdBtn.innerText = "Şifreyi Güncelle";
         pwdBtn.disabled = false;

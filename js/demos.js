@@ -200,12 +200,7 @@ window.submitDemoRating = async function(docId, ownerId, title) {
 
     // Bildirim gönder
     const msg = `${localStorage.getItem('userName')}, "${title}" demona oylama yaptı. Notu: "${note || 'Not yok'}"`;
-    await addDoc(collection(db, `notifications/${ownerId}/user_notifications`), {
-      message: msg,
-      createdAt: serverTimestamp(),
-      type: 'demo_rating',
-      link: 'demos.html'
-    });
+    window.sendNotification(ownerId, msg, 'demo_rating', 'demos.html');
 
     alert("Puan gönderildi!");
     document.getElementById(`rate-${docId}`).style.display = 'none';

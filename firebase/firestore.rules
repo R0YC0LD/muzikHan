@@ -96,6 +96,7 @@ service cloud.firestore {
     match /activity_log/{logId} {
       allow read: if isSignedIn() && isAdmin();
       allow create: if isSignedIn() && isAdmin();
+      allow delete: if isSignedIn() && isAdmin();
     }
   }
 }

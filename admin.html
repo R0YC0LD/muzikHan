@@ -41,11 +41,9 @@
 
       <div class="card" data-role="admin">
         <h3>Kullanıcı Yönetimi</h3>
-        <p class="text-mut">Kullanıcıların rollerini buradan belirleyebilirsiniz.</p>
-        <div id="user-list" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
-          <!-- Loaded via admin.js -->
-          <p>Yükleniyor...</p>
-        </div>
+        <p class="text-mut">İsim veya email aratıp kullanıcının rolünü değiştirebilirsiniz.</p>
+        <input type="text" id="user-search-input" placeholder="Kullanıcı ara (isim veya email)..." style="margin-top: 1rem;">
+        <div id="user-search-results" style="margin-top: 0.8rem; display: flex; flex-direction: column; gap: 0.5rem;"></div>
       </div>
 
       <div class="card" data-role="admin" style="margin-top: 2rem;">

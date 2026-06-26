@@ -148,7 +148,7 @@ window.showNotif = function(title, text, type = 'default') {
 
 
 // Global User Avatar Fetcher (Cache)
-import { getDoc, doc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getDoc, doc, addDoc, collection, serverTimestamp, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { db } from "./firebase.js";
 
 // Yükleme öncesi dosya boyutu/format kontrolü (kullanıcıya anlık, anlaşılır hata göstermek için)
@@ -166,7 +166,21 @@ window.validateFile = function(file, { maxMB, exts } = {}) {
   return { ok: true };
 };
 
-// Admin işlemlerini kayıt altına alan basit aktivite günlüğü
+// Bir koleksiyonu en fazla maxCount kayıtla sınırlar, eski (createdAt'e göre en eski) kayıtları siler.
+// Firebase'de yer tasarrufu için: loglar/bildirimler sınırsız büyümesin.
+async function pruneOldDocs(collRef, maxCount) {
+  try {
+    const snap = await getDocs(query(collRef, orderBy('createdAt', 'desc')));
+    if (snap.docs.length > maxCount) {
+      const excess = snap.docs.slice(maxCount);
+      for (const d of excess) await deleteDoc(d.ref);
+    }
+  } catch (e) {
+    console.error("Eski kayıtlar silinemedi:", e);
+  }
+}
+
+// Admin işlemlerini kayıt altına alan basit aktivite günlüğü (en fazla 20 kayıt tutulur)
 window.logActivity = async function(action, targetName) {
   try {
     await addDoc(collection(db, "activity_log"), {
@@ -176,8 +190,25 @@ window.logActivity = async function(action, targetName) {
       targetName: targetName || '',
       createdAt: serverTimestamp()
     });
+    await pruneOldDocs(collection(db, "activity_log"), 20);
   } catch (e) {
     console.error("Aktivite günlüğü yazılamadı:", e);
+  }
+};
+
+// Tüm bildirim gönderimleri buradan geçer (tutarlılık için).
+// Not: alıcının eski bildirimlerini gönderen silemez (güvenlik kuralı sahibine özel) —
+// bu yüzden 20 sınırı, kullanıcı kendi bildirimlerini her sayfa açışında pruneMyNotifications() ile uygular.
+window.sendNotification = async function(uid, message, type, link) {
+  try {
+    await addDoc(collection(db, `notifications/${uid}/user_notifications`), {
+      message,
+      type: type || 'info',
+      link: link || null,
+      createdAt: serverTimestamp()
+    });
+  } catch (e) {
+    console.error("Bildirim gönderilemedi:", e);
   }
 };
 
@@ -216,6 +247,10 @@ let _firstNotifLoad = true;
 onAuthStateChanged(auth, (user) => {
   if(user) {
     if(_notifUnsub) _notifUnsub();
+
+    // Kendi bildirimlerini en fazla 20 ile sınırla (sadece sahibi silebildiği için burada, kendi oturumunda yapılır)
+    pruneOldDocs(collection(db, `notifications/${user.uid}/user_notifications`), 20);
+
     const q = query(collection(db, `notifications/${user.uid}/user_notifications`), orderBy('createdAt', 'desc'), limit(1));
     _notifUnsub = onSnapshot(q, (snapshot) => {
       if(_firstNotifLoad) {

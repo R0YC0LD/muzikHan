@@ -271,12 +271,7 @@ window.addMemberToTeam = async function(tId, uid, name, role) {
 
     // Send notification to the user
     const tName = (await getDoc(tRef)).data().name;
-    await addDoc(collection(db, `notifications/${uid}/user_notifications`), {
-      message: `Seni "${tName}" ekibine ekledi!`,
-      createdAt: serverTimestamp(),
-      type: 'team_add',
-      link: 'messages.html'
-    });
+    window.sendNotification(uid, `Seni "${tName}" ekibine ekledi!`, 'team_add', 'messages.html');
 
     document.getElementById(`search-${tId}`).value = '';
     loadTeams();

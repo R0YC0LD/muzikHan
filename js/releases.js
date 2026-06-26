@@ -159,12 +159,7 @@ window.loadAdminReleases = async function(loadMore = false) {
 window.approveRelease = async function(id, title, ownerId) {
   try {
     await updateDoc(doc(db, "releases", id), { status: 'onaylandı' });
-    await addDoc(collection(db, `notifications/${ownerId}/user_notifications`), {
-      message: `"${title}" adlı şarkın onaylandı ve yayına hazırlanıyor!`,
-      createdAt: serverTimestamp(),
-      type: 'release_approved',
-      link: 'releases.html'
-    });
+    window.sendNotification(ownerId, `"${title}" adlı şarkın onaylandı ve yayına hazırlanıyor!`, 'release_approved', 'releases.html');
     window.logActivity('Release onayladı', title);
     window.loadAdminReleases();
   } catch(e) { alert('Hata: ' + e.message); }
@@ -174,12 +169,7 @@ window.rejectRelease = async function(id, title, ownerId) {
   const reason = prompt('Red sebebini yazabilirsin (opsiyonel):', '') || '';
   try {
     await updateDoc(doc(db, "releases", id), { status: 'reddedildi', rejectReason: reason });
-    await addDoc(collection(db, `notifications/${ownerId}/user_notifications`), {
-      message: `"${title}" adlı şarkın reddedildi.${reason ? ' Sebep: ' + reason : ''}`,
-      createdAt: serverTimestamp(),
-      type: 'release_rejected',
-      link: 'releases.html'
-    });
+    window.sendNotification(ownerId, `"${title}" adlı şarkın reddedildi.${reason ? ' Sebep: ' + reason : ''}`, 'release_rejected', 'releases.html');
     window.logActivity('Release reddetti', title);
     window.loadAdminReleases();
   } catch(e) { alert('Hata: ' + e.message); }

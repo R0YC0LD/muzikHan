@@ -381,12 +381,7 @@ async function sendMessage() {
     
     // Notifications logic
     if(currentChatType === '1v1' && currentPeerId) {
-      await addDoc(collection(db, `notifications/${currentPeerId}/user_notifications`), {
-        message: `${localStorage.getItem('userName')} sana yeni bir mesaj gönderdi: "${text.substring(0,20)}..."`,
-        createdAt: serverTimestamp(),
-        type: 'chat_msg',
-        link: 'messages.html'
-      });
+      window.sendNotification(currentPeerId, `${localStorage.getItem('userName')} sana yeni bir mesaj gönderdi: "${text.substring(0,20)}..."`, 'chat_msg', 'messages.html');
     } else if(currentChatType === 'group') {
        // Send notification to all other participants
        const cDoc = await getDoc(doc(db, "chats", currentChatId));
@@ -394,12 +389,7 @@ async function sendMessage() {
           const parts = cDoc.data().participants;
           for(let pId of parts) {
             if(pId !== uid) {
-              await addDoc(collection(db, `notifications/${pId}/user_notifications`), {
-                message: `${localStorage.getItem('userName')} "${currentChatName}" grubuna mesaj gönderdi.`,
-                createdAt: serverTimestamp(),
-                type: 'chat_msg',
-                link: 'messages.html'
-              });
+              window.sendNotification(pId, `${localStorage.getItem('userName')} "${currentChatName}" grubuna mesaj gönderdi.`, 'chat_msg', 'messages.html');
             }
           }
        }
