@@ -34,7 +34,9 @@ service cloud.firestore {
       // Demolar prodüktörlerin kendi içinde puanladığı üretim havuzu: sadece admin/prodüktör
       // ve demonun sahibi okuyabilir, başka bir sanatçı/kullanıcı tüm demoları listeleyemez.
       allow read: if isSignedIn() && (isAdmin() || isProducer() || isOwner(resource.data.ownerId));
-      allow create, update: if isSignedIn() && (isAdmin() || isProducer());
+      // Sanatçı sadece kendi demosunu ekleyebilir; puanlama (update) admin/prodüktöre özel kalır.
+      allow create: if isSignedIn() && (isAdmin() || isProducer() || (isArtist() && isOwner(request.resource.data.ownerId)));
+      allow update: if isSignedIn() && (isAdmin() || isProducer());
       allow delete: if isSignedIn() && isAdmin();
     }
 

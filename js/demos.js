@@ -1,5 +1,5 @@
 import { db, storage } from './firebase.js';
-import { collection, addDoc, getDocs, getDoc, doc, setDoc, updateDoc, query, orderBy, limit, startAfter, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, addDoc, getDocs, getDoc, doc, setDoc, updateDoc, query, where, orderBy, limit, startAfter, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { auth } from './auth.js';
@@ -10,11 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
   
   onAuthStateChanged(auth, (user) => {
     if(user) {
-      const role = localStorage.getItem('userRole');
-      if(role !== 'admin' && role !== 'producer') {
-        document.querySelector('.main-content').innerHTML = '<h2 style="margin:2rem">Yetkiniz Yok</h2>';
-        return;
-      }
       window.loadDemos();
     }
   });
@@ -69,30 +64,40 @@ window.loadDemos = async function(loadMore = false) {
   const uid = localStorage.getItem('uid');
   const userRole = localStorage.getItem('userRole');
   const canRate = (userRole === 'admin' || userRole === 'producer');
+  // Sanatçı sadece kendi eklediği demoları görebilir; admin/prodüktör tüm havuzu görür.
+  const ownOnly = userRole === 'artist';
 
   let q;
-  if(loadMore && window.lastVisibleDemo) {
+  if(ownOnly) {
+    // ownerId eşitlik filtresi + createdAt orderBy birlikte composite index isteyeceği için
+    // sıralamayı client-side yapıyoruz (sayı az olduğundan pagination da gerekmiyor).
+    q = query(collection(db, "demos"), where('ownerId', '==', uid));
+    list.innerHTML = '';
+  } else if(loadMore && window.lastVisibleDemo) {
     q = query(collection(db, "demos"), orderBy('createdAt', 'desc'), startAfter(window.lastVisibleDemo), limit(10));
   } else {
     q = query(collection(db, "demos"), orderBy('createdAt', 'desc'), limit(10));
     list.innerHTML = '';
     window.lastVisibleDemo = null;
   }
-  
+
   try {
     const snap = await getDocs(q);
     const btnId = 'load-more-demos';
     const oldBtn = document.getElementById(btnId);
     if(oldBtn) oldBtn.remove();
-    
+
     if(snap.empty) {
       if(!loadMore) list.innerHTML = `<p>Gösterilecek demo bulunamadı.</p>`;
       return;
     }
 
-    window.lastVisibleDemo = snap.docs[snap.docs.length - 1];
-    
-    snap.forEach(docSnap => {
+    const docs = ownOnly
+      ? snap.docs.slice().sort((a, b) => (b.data().createdAt?.seconds || 0) - (a.data().createdAt?.seconds || 0))
+      : snap.docs;
+    if(!ownOnly) window.lastVisibleDemo = snap.docs[snap.docs.length - 1];
+
+    docs.forEach(docSnap => {
       const d = docSnap.data();
       const id = docSnap.id;
       
@@ -177,7 +182,7 @@ window.loadDemos = async function(loadMore = false) {
       });
     });
 
-    if(snap.docs.length === 10) {
+    if(!ownOnly && snap.docs.length === 10) {
       list.innerHTML += `<button id="load-more-demos" class="btn btn-secondary" style="width:100%; margin-top:20px; text-align:center;" onclick="window.loadDemos(true)">Daha Fazla Yükle</button>`;
     }
   } catch(e) {

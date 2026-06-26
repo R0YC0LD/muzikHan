@@ -152,21 +152,20 @@ window.validateFile = function(file, { maxMB, exts } = {}) {
   return { ok: true };
 };
 
-// Bir koleksiyonu en fazla maxCount kayıtla sınırlar, eski (createdAt'e göre en eski) kayıtları siler.
+// Bir koleksiyondaki 24 saatten eski kayıtları siler (createdAt'e bakar).
 // Firebase'de yer tasarrufu için: loglar/bildirimler sınırsız büyümesin.
-async function pruneOldDocs(collRef, maxCount) {
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+async function pruneOldDocs(collRef) {
   try {
-    const snap = await getDocs(query(collRef, orderBy('createdAt', 'desc')));
-    if (snap.docs.length > maxCount) {
-      const excess = snap.docs.slice(maxCount);
-      for (const d of excess) await deleteDoc(d.ref);
-    }
+    const cutoff = new Date(Date.now() - ONE_DAY_MS);
+    const snap = await getDocs(query(collRef, where('createdAt', '<', cutoff)));
+    for (const d of snap.docs) await deleteDoc(d.ref);
   } catch (e) {
     console.error("Eski kayıtlar silinemedi:", e);
   }
 }
 
-// Admin işlemlerini kayıt altına alan basit aktivite günlüğü (en fazla 20 kayıt tutulur)
+// Admin işlemlerini kayıt altına alan basit aktivite günlüğü (24 saatten eskisi otomatik silinir)
 window.logActivity = async function(action, targetName) {
   try {
     await addDoc(collection(db, "activity_log"), {
@@ -176,7 +175,7 @@ window.logActivity = async function(action, targetName) {
       targetName: targetName || '',
       createdAt: serverTimestamp()
     });
-    await pruneOldDocs(collection(db, "activity_log"), 20);
+    await pruneOldDocs(collection(db, "activity_log"));
   } catch (e) {
     console.error("Aktivite günlüğü yazılamadı:", e);
   }
@@ -184,7 +183,7 @@ window.logActivity = async function(action, targetName) {
 
 // Tüm bildirim gönderimleri buradan geçer (tutarlılık için).
 // Not: alıcının eski bildirimlerini gönderen silemez (güvenlik kuralı sahibine özel) —
-// bu yüzden 20 sınırı, kullanıcı kendi bildirimlerini her sayfa açışında pruneMyNotifications() ile uygular.
+// bu yüzden 24 saatlik temizlik, kullanıcı kendi bildirimlerini her sayfa açışında uygular (bkz. aşağıdaki onAuthStateChanged).
 window.sendNotification = async function(uid, message, type, link) {
   try {
     await addDoc(collection(db, `notifications/${uid}/user_notifications`), {
@@ -223,31 +222,43 @@ window.renderAvatarHtml = function(url, size, fallbackChar) {
 };
 
 // Global Notifications Listener
-import { query, orderBy, onSnapshot, limit } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { query, where, orderBy, onSnapshot, limit } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { auth } from "./auth.js";
 
 let _notifUnsub = null;
 let _firstNotifLoad = true;
+// limit(1) + orderBy(desc) sorgusunda en yeni bildirim silinince, ondan önceki bildirim
+// "added" olarak tekrar görünür (sonuç kümesine yeni girdiği için) ve sahte bir popup tetikler.
+// Gerçek "yeni" olayı, daha önce gördüğümüz en yüksek createdAt zaman damgasından daha yeni olanlardır.
+let _lastSeenNotifMillis = 0;
 
 onAuthStateChanged(auth, (user) => {
   if(user) {
     if(_notifUnsub) _notifUnsub();
+    _firstNotifLoad = true;
+    _lastSeenNotifMillis = 0;
 
-    // Kendi bildirimlerini en fazla 20 ile sınırla (sadece sahibi silebildiği için burada, kendi oturumunda yapılır)
-    pruneOldDocs(collection(db, `notifications/${user.uid}/user_notifications`), 20);
+    // Kendi bildirimlerini 24 saatten eskiyse temizle (sadece sahibi silebildiği için burada, kendi oturumunda yapılır)
+    pruneOldDocs(collection(db, `notifications/${user.uid}/user_notifications`));
 
     const q = query(collection(db, `notifications/${user.uid}/user_notifications`), orderBy('createdAt', 'desc'), limit(1));
     _notifUnsub = onSnapshot(q, (snapshot) => {
-      if(_firstNotifLoad) {
-        _firstNotifLoad = false;
-        return;
-      }
       snapshot.docChanges().forEach((change) => {
         if (change.type === "added") {
           const data = change.doc.data();
+          const ts = data.createdAt ? data.createdAt.toMillis() : 0;
+
+          if(_firstNotifLoad) {
+            // Sayfa ilk açıldığında zaten var olan bildirim için popup gösterme, sadece referans al
+            _lastSeenNotifMillis = ts;
+            return;
+          }
+          if(ts <= _lastSeenNotifMillis) return; // silme sonrası geri yüzeye çıkan eski bildirim — yoksay
+
+          _lastSeenNotifMillis = ts;
           window.showNotif("Yeni Bildirim", data.message);
-          
+
           const pop = document.getElementById("notif-pop");
           if(pop) {
              pop.onclick = () => {
@@ -257,6 +268,7 @@ onAuthStateChanged(auth, (user) => {
           }
         }
       });
+      _firstNotifLoad = false;
     });
   } else {
     if(_notifUnsub) _notifUnsub();

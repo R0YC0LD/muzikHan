@@ -27,21 +27,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const sInput = document.getElementById('search-user-input');
   const sResults = document.getElementById('search-user-results');
-  let searchCache = null;
+  // Cache'i ilk tuşa basışta gecikmeli (lazy) doldurmak, hızlı yazıldığında yarış durumuna
+  // (eski/boş cache'e göre filtrelenip "sonuç bulunamadı" yanıp sönmesine) yol açıyordu.
+  // Sayfa açılışında bir kere baştan yüklüyoruz, admin.js'teki desenle aynı.
+  let searchCache = [];
+  try {
+    const presnap = await getDocs(collection(db, "users"));
+    presnap.forEach(d => searchCache.push({id: d.id, ...d.data()}));
+  } catch(err) {}
 
   if(sInput && sResults) {
-    sInput.addEventListener('input', async (e) => {
+    sInput.addEventListener('input', (e) => {
        const val = e.target.value.trim().toLowerCase();
        if(!val) { sResults.style.display = 'none'; return; }
-       if(!searchCache) {
-          searchCache = [];
-          sResults.innerHTML = '<div style="padding:10px; color:var(--mut);">Kullanıcılar aranıyor...</div>';
-          sResults.style.display = 'flex';
-          try {
-            const snap = await getDocs(collection(db, "users"));
-            snap.forEach(d => searchCache.push({id: d.id, ...d.data()}));
-          } catch(err){}
-       }
+
        const filtered = searchCache.filter(u => (u.name||'').toLowerCase().includes(val) || (u.email||'').toLowerCase().includes(val));
        sResults.innerHTML = '';
        filtered.slice(0, 10).forEach(u => {

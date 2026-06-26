@@ -1,12 +1,15 @@
 import { db } from './firebase.js';
-import { collection, query, orderBy, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', () => {
   const uid = localStorage.getItem('uid');
   if(!uid) return;
 
+  const clearBtn = document.getElementById('clear-all-notifs-btn');
+  if(clearBtn) clearBtn.addEventListener('click', () => window.deleteAllNotifs());
+
   const q = query(collection(db, `notifications/${uid}/user_notifications`), orderBy('createdAt', 'desc'));
-  
+
   onSnapshot(q, (snapshot) => {
     const list = document.getElementById('notifications-list');
     if(!list) return;
@@ -46,5 +49,19 @@ window.deleteNotif = async function(docId) {
     await deleteDoc(doc(db, `notifications/${uid}/user_notifications`, docId));
   } catch(e) {
     console.error("Silme hatası: ", e);
+  }
+};
+
+window.deleteAllNotifs = async function() {
+  const uid = localStorage.getItem('uid');
+  if(!uid) return;
+  if(!confirm('Tüm bildirimlerini silmek istediğine emin misin?')) return;
+
+  try {
+    const snap = await getDocs(collection(db, `notifications/${uid}/user_notifications`));
+    for(const d of snap.docs) await deleteDoc(d.ref);
+    if(window.showToast) window.showToast("Tüm bildirimler silindi.");
+  } catch(e) {
+    alert("Silme hatası: " + e.message);
   }
 };

@@ -21,9 +21,12 @@
       <div id="navbar-container"></div>
 
       <div class="card" data-role="all">
-        <h3 style="margin-bottom: 1.5rem; color: var(--shn-pink);">Bildirimler</h3>
-        <p class="text-mut" style="margin-bottom: 2rem;">Son hareketler ve size gelen değerlendirmeler.</p>
-        
+        <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom: 1.5rem;">
+          <h3 style="margin:0; color: var(--shn-pink);">Bildirimler</h3>
+          <button class="btn btn-ghost btn-sm" id="clear-all-notifs-btn" style="color:var(--bad);">🗑️ Tümünü Sil</button>
+        </div>
+        <p class="text-mut" style="margin-bottom: 2rem;">Son hareketler ve size gelen değerlendirmeler. Bildirimler 24 saat sonra otomatik silinir.</p>
+
         <div id="notifications-list" style="display:flex; flex-direction:column; gap:1rem;">
           <p>Bildirimler yükleniyor...</p>
         </div>
