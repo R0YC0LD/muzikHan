@@ -1,22 +1,5 @@
 import { initAuth } from './auth.js';
 
-// Tam Ekran (Fullscreen) Aktifleştirme
-function enableFullscreen() {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().catch(err => {
-      console.log(`Tam ekran hatası: ${err.message}`);
-    });
-  }
-}
-
-// Uygulama yüklendikten sonra ilk tıklamada tam ekrana geç
-document.addEventListener('click', () => {
-  enableFullscreen();
-}, { once: true });
-document.addEventListener('touchstart', () => {
-  enableFullscreen();
-}, { once: true });
-
 document.addEventListener('DOMContentLoaded', async () => {
   // Dinamik olarak sidebar ve navbar'ı yükle (Sadece login değilse)
   if (!window.location.pathname.includes('login.html')) {

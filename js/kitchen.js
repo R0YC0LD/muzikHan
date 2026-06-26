@@ -1,6 +1,8 @@
 import { db, storage } from './firebase.js';
 import { collection, addDoc, getDocs, doc, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { auth } from './auth.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const upBeat = document.getElementById('upload-beat-btn');
@@ -11,9 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if(upPreset) upPreset.addEventListener('click', () => uploadItem('preset'));
   if(upStem) upStem.addEventListener('click', () => uploadItem('stem'));
 
-  loadItems('beats');
-  loadItems('presets');
-  loadItems('stems');
+  onAuthStateChanged(auth, (user) => {
+    if(user) {
+      loadItems('beats');
+      loadItems('presets');
+      loadItems('stems');
+    }
+  });
 });
 
 async function uploadItem(type) {

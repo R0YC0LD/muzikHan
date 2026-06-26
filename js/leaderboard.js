@@ -1,7 +1,9 @@
 import { db } from './firebase.js';
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { auth } from './auth.js';
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function fetchLeaderboard() {
   const lbList = document.getElementById('lb-list');
   try {
     const snap = await getDocs(collection(db, "demos"));
@@ -50,4 +52,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch(e) {
     lbList.innerHTML = '<p>Hata veya Yetki Yok.</p>';
   }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  onAuthStateChanged(auth, (user) => {
+    if(user) fetchLeaderboard();
+  });
 });

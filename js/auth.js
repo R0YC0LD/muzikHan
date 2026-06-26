@@ -73,10 +73,33 @@ function applyPermissions(role) {
     }
   });
 
+  const userName = localStorage.getItem('userName') || 'Kullanıcı';
+  const userAvatar = localStorage.getItem('userAvatar') || '';
+
   const userNameDisplay = document.getElementById('user-name-display');
   if(userNameDisplay) {
-    userNameDisplay.innerText = localStorage.getItem('userName');
+    userNameDisplay.innerText = userName;
   }
+  
+  const navUsername = document.getElementById('nav-username');
+  if(navUsername) {
+    navUsername.innerText = userName;
+  }
+
+  // Render avatars if window.renderAvatarHtml is ready (from app.js)
+  setTimeout(() => {
+    if(window.renderAvatarHtml) {
+      const sbAv = document.querySelector('.user-profile .avatar');
+      if(sbAv) sbAv.outerHTML = window.renderAvatarHtml(userAvatar, 40, userName);
+
+      const navAv = document.getElementById('nav-avatar');
+      if(navAv) {
+         // Keep the id so it doesn't break CSS if any, actually renderAvatarHtml doesn't add ID.
+         const html = window.renderAvatarHtml(userAvatar, 35, userName);
+         navAv.outerHTML = html.replace('class="avatar"', 'id="nav-avatar" class="avatar"');
+      }
+    }
+  }, 100);
 }
 
 export async function registerUser(email, pass) {

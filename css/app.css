@@ -314,3 +314,54 @@ input:focus, select:focus, textarea:focus {
 .btn-ghost:hover{background:rgba(255,255,255,0.05); border-color:var(--line-strong);}
 .hidden{display:none!important;}
 
+
+
+/* ---------- MOBILE RESPONSIVE ---------- */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    padding: 0.5rem;
+    flex-direction: row;
+    background: rgba(10,10,10,0.95);
+    border-right: none;
+    border-top: 1px solid var(--line);
+  }
+  .brand, .user-profile {
+    display: none !important;
+  }
+  .nav-menu {
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-around;
+    gap: 0;
+  }
+  .nav-item {
+    padding: 0.5rem;
+    font-size: 0.6rem;
+    flex-direction: column;
+    gap: 0.3rem;
+    text-align: center;
+  }
+  .main-content {
+    margin-left: 0;
+    margin-bottom: 80px;
+    padding: 1.5rem 1rem;
+  }
+  .stats-grid, .list-grid {
+    grid-template-columns: 1fr;
+  }
+  .top-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

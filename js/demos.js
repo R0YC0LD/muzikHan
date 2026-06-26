@@ -1,12 +1,18 @@
 import { db, storage } from './firebase.js';
 import { collection, addDoc, getDocs, doc, setDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { auth } from './auth.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const uploadBtn = document.getElementById('upload-demo-btn');
   if(uploadBtn) uploadBtn.addEventListener('click', uploadDemo);
   
-  loadDemos();
+  onAuthStateChanged(auth, (user) => {
+    if(user) {
+      loadDemos();
+    }
+  });
 });
 
 async function uploadDemo() {
