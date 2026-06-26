@@ -76,3 +76,42 @@ async function submitRelease() {
     btn.disabled = false;
   }
 }
+
+import { getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+document.addEventListener('DOMContentLoaded', () => {
+  onAuthStateChanged(auth, (user) => {
+    if(user && localStorage.getItem('userRole') === 'admin') {
+      document.getElementById('admin-releases-section').style.display = 'block';
+      loadAdminReleases();
+    }
+  });
+});
+
+async function loadAdminReleases() {
+  const list = document.getElementById('releases-list');
+  list.innerHTML = 'Yükleniyor...';
+  try {
+    const snap = await getDocs(collection(db, "releases"));
+    if(snap.empty) { list.innerHTML = 'Bekleyen yayın yok.'; return; }
+    list.innerHTML = '';
+    snap.forEach(d => {
+      const data = d.data();
+      list.innerHTML += \<div style="background:rgba(255,255,255,0.05); padding:1rem; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <h4 style="color:#fff">\</h4>
+          <p style="font-size:0.8rem; color:var(--mut);">Sanatçı: \</p>
+        </div>
+        <button class="btn btn-ghost" style="color:var(--bad);" onclick="deleteRelease('\')">🗑️ Sil</button>
+      </div>\;
+    });
+  } catch(e) { list.innerHTML = 'Hata: ' + e.message; }
+}
+
+window.deleteRelease = async function(id) {
+  if(!confirm('Bu yayını silmek istediğinize emin misiniz?')) return;
+  try {
+    await deleteDoc(doc(db, "releases", id));
+    loadAdminReleases();
+  } catch(e) { alert('Hata: ' + e.message); }
+}
+

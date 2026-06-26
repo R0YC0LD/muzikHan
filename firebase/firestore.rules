@@ -8,76 +8,72 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role; 
     }
     function isAdmin() { return getUserRole() == 'admin'; }
-    function isCrew() { return getUserRole() == 'crew'; }
     function isProducer() { return getUserRole() == 'producer'; }
     function isArtist() { return getUserRole() == 'artist'; }
     function isOwner(uid) { return request.auth.uid == uid; }
 
     match /users/{uid} {
-      // Herkes birbirinin profilini (isim ve avatarını) görebilir (Sohbet ve Liderlik Tablosu için şart)
       allow read: if isSignedIn();
-      // Rolleri sadece admin değiştirebilir, kullanıcı kendi ismini ve fotoğrafını güncelleyebilir
       allow write: if isSignedIn() && (isOwner(uid) || isAdmin());
     }
 
-    match /demos/{demoId} {
-      // Herkes demoları okuyabilir (Liderlik Tablosu listelemesi için şart)
+    match /teams/{teamId} {
       allow read: if isSignedIn();
-      // Demo yükleme sadece crew, admin ve producer tarafından
-      allow create: if isSignedIn() && (isAdmin() || isCrew() || isProducer());
-      // Oylama yapabilmeleri için Producer'ların da update yetkisine ihtiyacı var
-      allow update: if isSignedIn() && (isAdmin() || isCrew() || isProducer());
-      // Demoyu sadece Admin ve Crew silebilir (Admin demo silme özelliği için şart)
-      allow delete: if isSignedIn() && (isAdmin() || isCrew());
+      allow create: if isSignedIn() && (isAdmin() || isProducer());
+      allow update, delete: if isSignedIn() && (isAdmin() || isOwner(resource.data.ownerId));
+    }
+
+    match /demos/{demoId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && (isAdmin() || isProducer());
+      allow delete: if isSignedIn() && isAdmin();
     }
 
     match /releases/{releaseId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn() && (isAdmin() || isCrew() || isArtist());
+      allow create: if isSignedIn() && (isAdmin() || isArtist() || isProducer());
       allow update, delete: if isSignedIn() && isAdmin();
     }
 
     match /beats/{beatId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn() && (isAdmin() || isCrew() || isProducer());
-      // Oylama için update yetkisi
-      allow update: if isSignedIn() && (isAdmin() || isCrew() || isProducer());
+      allow create, update: if isSignedIn() && (isAdmin() || isProducer());
       allow delete: if isSignedIn() && (isAdmin() || isOwner(resource.data.ownerId));
     }
     
     match /presets/{presetId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn() && (isAdmin() || isCrew() || isProducer());
-      allow update: if isSignedIn() && (isAdmin() || isCrew() || isProducer());
+      allow create, update: if isSignedIn() && (isAdmin() || isProducer());
       allow delete: if isSignedIn() && (isAdmin() || isOwner(resource.data.ownerId));
     }
 
     match /stems/{stemId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn() && (isAdmin() || isCrew() || isProducer());
-      allow update: if isSignedIn() && (isAdmin() || isCrew() || isProducer());
+      allow create, update: if isSignedIn() && (isAdmin() || isProducer());
       allow delete: if isSignedIn() && (isAdmin() || isOwner(resource.data.ownerId));
     }
 
     match /notifications/{uid}/user_notifications/{docId} {
-      // Bildirimleri sadece sahibi okuyabilir ve silebilir
       allow read, delete: if isSignedIn() && isOwner(uid);
-      // Sistemi (mesaj atma, oy verme sonucu bildirim yollama) herkes tetikleyebilir
       allow create, update: if isSignedIn();
     }
     
     match /chats/{chatId} {
-      // Sadece chat id'si kendi uid'sini içeren kişiler okuyup yazabilir (Silme özelliği için Update de eklendi)
-      allow read, write: if isSignedIn() && chatId.matches('.*' + request.auth.uid + '.*');
+      allow read, write: if isSignedIn() && (
+        chatId.matches('.*' + request.auth.uid + '.*') ||
+        (resource != null && request.auth.uid in resource.data.participants) ||
+        (request.resource != null && request.auth.uid in request.resource.data.participants)
+      );
     }
 
     match /chats/{chatId}/messages/{msgId} {
-      // Sadece chat id'si kendi uid'sini içeren (yani sohbetteki) kişiler okuyup yazabilir
-      allow read, write: if isSignedIn() && chatId.matches('.*' + request.auth.uid + '.*');
+      allow read, write: if isSignedIn() && (
+        chatId.matches('.*' + request.auth.uid + '.*') ||
+        (get(/databases/$(database)/documents/chats/$(chatId)).data != null && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants)
+      );
     }
     
     match /friends/{uid}/list/{friendId} {
-      // Arkadaşlık listesi yönetimi
       allow read: if isSignedIn();
       allow write: if isSignedIn() && isOwner(uid);
     }

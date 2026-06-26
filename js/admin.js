@@ -26,7 +26,7 @@ async function loadUsers() {
           </div>
           <select onchange="window.changeUserRole('${id}', this.value)">
             <option value="artist" ${u.role === 'artist' ? 'selected' : ''}>Sanatçı</option>
-            <option value="crew" ${u.role === 'crew' ? 'selected' : ''}>Ekip Üyesi</option>
+            
             <option value="producer" ${u.role === 'producer' ? 'selected' : ''}>Prodüktör</option>
             <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Yönetici</option>
           </select>

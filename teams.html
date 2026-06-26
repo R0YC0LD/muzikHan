@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#030303">
+  <meta charset="UTF-8">
+  <title>Ekipler - MüzikHan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+  <style>
+    .team-card { background: rgba(255,255,255,0.02); border: 1px solid var(--line-strong); padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; }
+    .team-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 1rem; margin-bottom: 1rem; }
+    .team-members { display: flex; flex-direction: column; gap: 0.5rem; }
+    .member-row { display: flex; justify-content: space-between; align-items: center; background: #000; padding: 10px; border-radius: 8px; border: 1px solid var(--line); }
+    .search-box { display: flex; gap: 10px; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div id="sidebar-container"></div>
+    
+    <div class="main-content">
+      <div id="navbar-container"></div>
+
+      <div class="card">
+        <h3>Ekipler Yönetimi</h3>
+        <p class="text-mut">Yeni ekip kurabilir, mevcut ekiplerinize üye ekleyip çıkarabilirsiniz.</p>
+        
+        <div style="margin-top:2rem; display:flex; gap:10px;">
+          <input type="text" id="new-team-name" placeholder="Yeni Ekip Adı...">
+          <button class="btn btn-primary" id="btn-create-team">Ekip Kur</button>
+        </div>
+      </div>
+
+      <div id="teams-list" style="margin-top: 2rem;">
+        <!-- Teams will be loaded here -->
+        <p>Yükleniyor...</p>
+      </div>
+      
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/teams.js"></script>
+</body>
+</html>
