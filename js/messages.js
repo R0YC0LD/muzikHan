@@ -88,6 +88,8 @@ async function loadUserCacheAndTeams() {
 
   try {
     const tSnap = await getDocs(collection(db, "teams"));
+    const memberUidsToRefresh = new Set();
+
     tSnap.forEach(d => {
       const data = d.data();
       if(data.members && data.members.find(m => m.uid === uid)) {
@@ -97,9 +99,22 @@ async function loadUserCacheAndTeams() {
         // "Bilinmiyor" ve rol etiketleri eksik görünüyordu.
         data.members.forEach(m => {
           if(!userCache[m.uid]) userCache[m.uid] = { name: m.name, role: m.role };
+          memberUidsToRefresh.add(m.uid);
         });
       }
     });
+
+    // team.members[].role, ekibe eklenme anının fotoğrafı — admin sonradan rolü değiştirirse
+    // burada eskimiş kalır (grup sohbetinde eski rozet görünmesinin sebebi buydu).
+    // window.getUserAvatar zaten kullanıcıyı çekip global cache'e (role dahil) alıyor, onu kullanıyoruz.
+    for (const mUid of memberUidsToRefresh) {
+      await window.getUserAvatar(mUid);
+      const fresh = window.userCache.get(mUid);
+      if (fresh && userCache[mUid]) {
+        userCache[mUid].role = fresh.role || userCache[mUid].role;
+        userCache[mUid].name = fresh.name || userCache[mUid].name;
+      }
+    }
   } catch(e) {
     console.error("Cache error", e);
   }
@@ -283,13 +298,16 @@ window.showTeamMembers = function(teamId) {
     list.innerHTML = '<p style="color:var(--mut); font-size:0.85rem;">Üye bilgisi bulunamadı.</p>';
   } else {
     list.innerHTML = members.map(m => {
-      const roleLabel = { admin: 'Yönetici', producer: 'Prodüktör', artist: 'Sanatçı' }[m.role] || m.role;
+      // team.members[].role eklenme anının snapshot'ı; loadUserCacheAndTeams() tarafından
+      // canlı veriyle tazelenen userCache, varsa güncel rolü verir.
+      const liveRole = (userCache[m.uid] && userCache[m.uid].role) || m.role;
+      const roleLabel = { admin: 'Yönetici', producer: 'Prodüktör', artist: 'Sanatçı' }[liveRole] || liveRole;
       const avId = `tmm-av-${m.uid}`;
       return `
         <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="window.location.href='profile.html?uid=${m.uid}'">
           <div id="${avId}"></div>
           <span style="font-size:0.85rem; color:#fff; flex:1;">${m.name}</span>
-          <span class="badge ${m.role==='admin'?'admin':'friend'}">${roleLabel}</span>
+          <span class="badge ${liveRole==='admin'?'admin':'friend'}">${roleLabel}</span>
         </div>
       `;
     }).join('');

@@ -73,12 +73,13 @@ async function loadMyTeams() {
 
       for(const m of members) {
         const avId = `tm-av-${team.id}-${m.uid}`;
+        const roleBadgeId = `role-${team.id}-${m.uid}`;
         membersContainer.innerHTML += `
           <div class="member-row">
             <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="window.location.href='profile.html?uid=${m.uid}'">
               <div id="${avId}"></div>
               <span style="font-size:0.85rem; color:#fff;">${m.name}</span>
-              <span class="badge ${m.role==='admin'?'admin':'friend'}">${m.role}</span>
+              <span class="badge ${m.role==='admin'?'admin':'friend'}" id="${roleBadgeId}">${m.role}</span>
             </div>
             <div style="display:flex; align-items:center; gap:10px;">
               <button class="btn btn-ghost btn-sm" style="padding:2px 6px; font-size:0.65rem;" onclick="this.nextElementSibling.classList.remove('hidden'); this.classList.add('hidden')">Maili Göster</button>
@@ -91,6 +92,14 @@ async function loadMyTeams() {
           const email = uDoc.exists() ? (uDoc.data().email || '') : '';
           const emailEl = document.getElementById(`email-${avId}`);
           if(emailEl) emailEl.textContent = email;
+
+          // Rol, ekibe eklenme anının snapshot'ı olduğu için sonradan değişmiş olabilir — güncelle.
+          const liveRole = uDoc.exists() ? uDoc.data().role : null;
+          const badgeEl = document.getElementById(roleBadgeId);
+          if(badgeEl && liveRole) {
+            badgeEl.textContent = liveRole;
+            badgeEl.className = `badge ${liveRole === 'admin' ? 'admin' : 'friend'}`;
+          }
         });
 
         window.getUserAvatar(m.uid).then(url => {
@@ -121,6 +130,19 @@ async function repairTeamChatSync(tId, members) {
   }
 }
 
+// Ekip üyesinin rolü ekibe eklendiği anın fotoğrafı (team.members[].role) — admin sonradan rolü
+// değiştirirse bu snapshot eskimiş kalır. Rozeti her render'da kullanıcının canlı/güncel
+// rolüyle yamalıyoruz (window.getUserAvatar zaten kullanıcıyı çekip global cache'e role dahil alıyor).
+async function refreshMemberRoleBadge(uid, badgeId) {
+  await window.getUserAvatar(uid);
+  const fresh = window.userCache.get(uid);
+  const el = document.getElementById(badgeId);
+  if (el && fresh && fresh.role) {
+    el.textContent = fresh.role;
+    el.className = `badge ${fresh.role === 'admin' ? 'admin' : 'friend'}`;
+  }
+}
+
 async function loadTeams() {
   const list = document.getElementById('teams-list');
   list.innerHTML = '';
@@ -142,15 +164,17 @@ async function loadTeams() {
       let memHtml = '';
       if(d.members && d.members.length > 0) {
         for(const m of d.members) {
+          const roleBadgeId = `role-${tId}-${m.uid}`;
           memHtml += `
             <div class="member-row">
               <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="window.location.href='profile.html?uid=${m.uid}'">
                 <span style="font-family:'Space Mono'; font-size:0.8rem; color:#fff;">${m.name}</span>
-                <span class="badge ${m.role==='admin'?'admin':'friend'}">${m.role}</span>
+                <span class="badge ${m.role==='admin'?'admin':'friend'}" id="${roleBadgeId}">${m.role}</span>
               </div>
               <button class="btn btn-ghost" style="color:var(--bad); padding:5px 10px;" onclick="removeMember('${tId}', '${m.uid}')">Kaldır</button>
             </div>
           `;
+          refreshMemberRoleBadge(m.uid, roleBadgeId);
         }
       } else {
         memHtml = '<p style="font-size:0.8rem; color:var(--mut);">Henüz üye yok.</p>';
